@@ -200,7 +200,7 @@ targets  = [
     "Colgate-Palmolive Colombia noticias",
     "Procter Gamble Crest Colombia",
     "Unilever Dove Colombia competencia",
-    ...
+    # ...
 ]
 alert_keywords = ["crisis", "recall", "retiro", "demanda"]
 store_to_memory = true
@@ -249,11 +249,9 @@ colgate-service-hand      Running   2dbac136-e137-5eb2-8106
 
 ## 8. Reporte de Inteligencia Autónomo
 
-El agente `colgate-intelligence-hand` ejecutó **2 ciclos autónomos** el 5 de junio de 2026 (18:44 y 19:43), procesando 4 fuentes web por ciclo sin intervención humana. Extracto del Ciclo 2:
+El agente `colgate-intelligence-hand` ejecutó **2 ciclos autónomos** el 5 de junio de 2026 (18:44 y 19:43), procesando 4 fuentes web por ciclo sin intervención humana. A continuación el extracto del Ciclo 2.
 
----
-
-**Intelligence Report** · 2026-06-05 · Ciclo 2 · Fuentes: 4
+> **Intelligence Report** · 2026-06-05 · Ciclo 2 · Fuentes procesadas: 4
 
 | Entidad | Tipo | Hallazgo |
 |---|---|---|
@@ -332,14 +330,14 @@ Solución en tres capas:
 
 Se implementó un análisis de clustering sobre las conversaciones del agente para identificar los patrones de consulta de los usuarios.
 
-**Pipeline:**
+### Pipeline
 
 1. Extracción de mensajes de usuario desde sesiones JSONL.
 2. Vectorización con `mistral-embed` (1024 dimensiones por mensaje).
 3. Reducción dimensional 1024 → 2 mediante t-SNE (`max_iter=1000`, `init="pca"`).
 4. Clasificación por intención con reglas léxicas y visualización por color.
 
-**Intenciones clasificadas:**
+### Categorías de intención
 
 | Categoría | Keywords representativas |
 |---|---|

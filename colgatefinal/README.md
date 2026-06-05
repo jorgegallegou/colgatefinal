@@ -170,7 +170,7 @@ colgatefinal/
 │   └── whatsapp_bridge.py     # WhatsApp channel configuration helper
 │
 ├── webhook_server.py          # Alternative FastAPI webhook (Meta Cloud API)
-├── tsne_analysis.py           # t-SNE intent clustering analysis (bonus)
+├── tsne_analysis.py           # Intent clustering analysis via t-SNE (Mistral Embeddings)
 │
 ├── informe.css                # PDF stylesheet (Inter + JetBrains Mono)
 ├── INFORME_TECNICO.md         # Technical report
@@ -184,7 +184,7 @@ colgatefinal/
 
 ---
 
-## t-SNE Intent Analysis (Bonus)
+## Intent Clustering Analysis
 
 Visualizes user query clusters by detected intent using Mistral Embeddings.
 
@@ -206,7 +206,7 @@ Falls back to 20 representative example sessions when fewer than 5 real sessions
 | LLM | Mistral AI `mistral-small-latest` |
 | Embeddings | Mistral `mistral-embed` (1024 dims) |
 | Scripts | Python 3.14 + `uv` |
-| Webhook (alt.) | FastAPI + uvicorn |
+| Webhook | FastAPI + uvicorn |
 | Visualization | scikit-learn, matplotlib |
 
 ---
