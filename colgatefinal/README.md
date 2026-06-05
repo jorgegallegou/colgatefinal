@@ -37,43 +37,44 @@ Mistral API  ──────────────────────�
 | `colgate-intelligence-hand` | Collector (Opción B) | cada 6 horas | Inteligencia competitiva: P&G, Unilever, tendencias mercado |
 | `colgate-service-hand` | Custom (Opción C) | lunes 9 AM | Calidad de servicio: opiniones consumidores en redes |
 
-Activar manualmente:
+Activar manualmente o con el CLI del proyecto:
 ```bash
-openfang hand activate collector --name colgate-intelligence
-openfang hand activate lead     --name colgate-leads
+# Via CLI del proyecto
+python main.py hand
+
+# Via openfang directamente
+openfang hand activate collector --name colgate-intelligence-hand
+openfang hand activate researcher --name colgate-service-hand
 ```
 
 ## Estructura del Repositorio
 
 ```
 colgatefinal/
-├── hand.toml                  # Manifiesto del agente, modelo, memoria, Hands y canal WhatsApp
+│
+├── hand.toml                  # Manifiesto del agente: modelo, memoria, Hands y canal WA
+├── main.py                    # CLI gestor: setup / ingest / hand / status / whatsapp
+├── pyproject.toml             # Dependencias Python (uv)
 ├── .env.example               # Plantilla de variables de entorno (sin credenciales)
 ├── .gitignore
 │
-├── scraper.py                 # Web scraping sitio oficial Colgate Colombia
-├── scraper_wikipedia.py       # Scraping artículo Wikipedia Colgate-Palmolive
-├── scraper_youtube.py         # Transcripciones canal YouTube oficial
-├── clean_knowledge_base.py    # Limpieza y normalización del KB (~235 fragmentos)
-├── build_vectorstore.py       # Inyección en Vector Store de OpenFang
+├── scripts/
+│   ├── ingest.py              # Inyección de KB en KV Store y Vector Store de OpenFang
+│   └── whatsapp_bridge.py     # Helper de configuración del canal WhatsApp
 │
 ├── webhook_server.py          # FastAPI webhook alternativo (Meta Cloud API)
-├── config.py                  # Configuración centralizada
+├── tsne_analysis.py           # Análisis t-SNE de intenciones de usuario (bonus +10 %)
 │
-├── tsne_analysis.py           # Análisis t-SNE de intenciones de usuario (bonus +10%)
+├── informe.css                # Hoja de estilos para generación del PDF (Inter + JetBrains Mono)
+├── INFORME_TECNICO.md         # Informe técnico completo (fuente Markdown)
+├── INFORME_TECNICO.pdf        # Informe técnico compilado (entrega)
 │
-├── data/
-│   ├── knowledge_base_clean.txt   # KB limpia lista para inyección
-│   ├── datos_estructurados.json   # KV Store: NIT, contactos, sedes, marcas
-│   ├── paginas_raw.json
-│   ├── wikipedia_raw.json
-│   └── youtube_raw.json
-│
-├── INFORME_TECNICO.md         # Informe técnico completo (fuente)
-└── INFORME_TECNICO.pdf        # Informe técnico compilado (entrega)
+└── data/
+    ├── knowledge_base_clean.txt   # Base de conocimiento (~235 fragmentos)
+    └── datos_estructurados.json   # Datos exactos: NIT, teléfonos, sedes, marcas
 ```
 
-> El gateway de WhatsApp (`index.js`) vive en `C:\Users\<user>\.openfang\whatsapp-gateway\` y no se versiona por contener credenciales de sesión de Baileys.
+> El gateway de WhatsApp (`index.js`) no está en el repositorio porque contiene la sesión activa de Baileys. Se almacena localmente en `C:\Users\<user>\.openfang\whatsapp-gateway\`.
 
 ## Configuración Rápida
 

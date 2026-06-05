@@ -384,26 +384,32 @@ Si hay menos de 5 sesiones reales usa datos de ejemplo representativos para demo
 ```
 colgatefinal/
 │
-├── hand.toml                  # Manifiesto del agente, modelo, Hands y canal WA
-├── .env.example               # Plantilla de variables (sin credenciales reales)
+├── hand.toml                  # Manifiesto del agente: modelo, memoria, Hands y canal WA
+├── main.py                    # CLI gestor: setup / ingest / hand / status / whatsapp
+├── pyproject.toml             # Dependencias Python (uv)
+├── .env.example               # Plantilla de variables de entorno (sin credenciales)
 ├── .gitignore
 │
-├── scraper.py                 # Scraping sitio oficial Colgate Colombia
-├── scraper_wikipedia.py       # Scraping artículo Wikipedia
-├── scraper_youtube.py         # Transcripciones YouTube
-├── clean_knowledge_base.py    # Limpieza y normalización del KB
-├── build_vectorstore.py       # Inyección en Vector Store de OpenFang
+├── scripts/
+│   ├── ingest.py              # Inyección de KB en KV Store y Vector Store de OpenFang
+│   └── whatsapp_bridge.py     # Helper de configuración del canal WhatsApp
 │
 ├── webhook_server.py          # FastAPI webhook alternativo (Meta Cloud API)
-├── tsne_analysis.py           # Análisis t-SNE de intenciones (bonus)
-├── config.py                  # Configuración centralizada
+├── tsne_analysis.py           # Análisis t-SNE de intenciones de usuario (bonus +10 %)
+│
+├── informe.css                # Estilos para generación del PDF (tipografía Inter)
+├── INFORME_TECNICO.md         # Informe técnico completo (fuente Markdown)
+├── INFORME_TECNICO.pdf        # Informe técnico compilado (entrega)
 │
 └── data/
-    ├── knowledge_base_clean.txt   # Base de conocimiento lista para inyección
-    ├── datos_estructurados.json   # Datos exactos: NIT, contactos, sedes
-    ├── paginas_raw.json           # Raw scraping sitio oficial
-    ├── wikipedia_raw.json         # Raw scraping Wikipedia
-    └── youtube_raw.json           # Raw scraping YouTube
+    ├── knowledge_base_clean.txt   # Base de conocimiento (~235 fragmentos)
+    └── datos_estructurados.json   # Datos exactos: NIT, teléfonos, sedes, marcas
+```
+
+El PDF se genera con:
+```bash
+pandoc INFORME_TECNICO.md -o INFORME_TECNICO.html --standalone --css=informe.css
+chrome --headless --print-to-pdf=INFORME_TECNICO.pdf --no-margins INFORME_TECNICO.html
 ```
 
 > El gateway de WhatsApp (`index.js`) no está en el repositorio porque contiene la sesión activa de Baileys (equivalente a un cookie de sesión de WhatsApp). Se almacena localmente en `C:\Users\JM\.openfang\whatsapp-gateway\`.
