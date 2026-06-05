@@ -7,7 +7,7 @@ Variables de entorno requeridas (ver .env.example):
     WA_ACCESS_TOKEN      Token de acceso de WhatsApp Business API
     WA_PHONE_NUMBER_ID   ID del número de teléfono de WhatsApp Business
     OPENFANG_AGENT_ID    UUID del agente en OpenFang (ver: openfang agent list)
-    OPENFANG_URL         URL de la API REST de OpenFang (default: http://127.0.0.1:50051)
+    OPENFANG_URL         URL de la API REST de OpenFang (default: http://127.0.0.1:4200)
 
 Ejecutar:
     uvicorn webhook_server:app --host 0.0.0.0 --port 8000
@@ -37,7 +37,7 @@ _load_env()
 WA_VERIFY_TOKEN    = os.environ.get("WA_VERIFY_TOKEN", "")
 WA_ACCESS_TOKEN    = os.environ.get("WA_ACCESS_TOKEN", "")
 WA_PHONE_NUMBER_ID = os.environ.get("WA_PHONE_NUMBER_ID", "")
-OPENFANG_URL       = os.environ.get("OPENFANG_URL", "http://127.0.0.1:50051")
+OPENFANG_URL       = os.environ.get("OPENFANG_URL", "http://127.0.0.1:4200")
 OPENFANG_AGENT_ID  = os.environ.get("OPENFANG_AGENT_ID", "")
 WA_API_VERSION     = os.environ.get("WA_API_VERSION", "v22.0")
 

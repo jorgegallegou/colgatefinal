@@ -22,3 +22,11 @@ build/
 .vscode/
 .idea/
 *.swp
+
+# Artefactos de build / sesion sensible
+*.html
+whatsapp_qr.png
+*.png
+
+# Claude Code
+.claude/

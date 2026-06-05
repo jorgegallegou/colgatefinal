@@ -1,7 +1,7 @@
 [project]
 name = "colgatefinal"
 version = "0.1.0"
-description = "Add your description here"
+description = "Agente conversacional WhatsApp para Colgate-Palmolive Colombia — OpenFang 0.6.9 + Mistral AI"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
