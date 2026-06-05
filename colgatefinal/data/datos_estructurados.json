@@ -1,0 +1,115 @@
+{
+  "contacto": {
+    "linea_gratuita": "018000520800",
+    "whatsapp": "+57 317 6405757",
+    "sitio_web": "https://www.colgatepalmolive.com.co",
+    "pagina_contacto": "https://www.colgatepalmolive.com.co/contact-us",
+    "correo_consumidor": "consumidor@colpal.com",
+    "redes_sociales": {
+      "facebook": "https://www.facebook.com/ColgateColombiaOficial",
+      "instagram": "https://www.instagram.com/colgate_co",
+      "youtube": "https://www.youtube.com/user/ColgatePalmolive"
+    }
+  },
+  "informacion_corporativa": {
+    "nombre_legal": "Colgate-Palmolive Compañía",
+    "nit": "890300546-6",
+    "sede_principal_colombia": "Cali, Valle del Cauca, Colombia",
+    "sede_corporativa_global": "Park Avenue, Midtown Manhattan, New York City, USA",
+    "fundacion_global": "1806",
+    "fundador": "William Colgate",
+    "presencia_paises": "Más de 200 países",
+    "sector": "Productos de consumo masivo"
+  },
+  "horarios_atencion": {
+    "linea_telefonica": "Lunes a Viernes: 8:00 AM - 6:00 PM | Sábados: 8:00 AM - 1:00 PM",
+    "whatsapp": "Lunes a Viernes: 7:00 AM - 7:00 PM | Sábados: 8:00 AM - 2:00 PM",
+    "chat_web": "Lunes a Viernes: 8:00 AM - 5:00 PM"
+  },
+  "sedes_colombia": [
+    {
+      "ciudad": "Cali",
+      "tipo": "Planta de producción y oficinas principales",
+      "direccion": "Yumbo, Valle del Cauca"
+    },
+    {
+      "ciudad": "Bogotá",
+      "tipo": "Oficina comercial",
+      "direccion": "Bogotá D.C."
+    },
+    {
+      "ciudad": "Medellín",
+      "tipo": "Centro de distribución",
+      "direccion": "Medellín, Antioquia"
+    }
+  ],
+  "marcas_principales_colombia": [
+    "Colgate (higiene bucal)",
+    "Palmolive (cuidado personal)",
+    "Protex (jabones antibacteriales)",
+    "Speed Stick (desodorantes masculinos)",
+    "Lady Speed Stick (desodorantes femeninos)",
+    "Suavitel (suavizantes de ropa)",
+    "Fabuloso (limpiadores multiusos)",
+    "Vel Rosita (lavaplatos)",
+    "Ajax (limpieza del hogar)",
+    "Mennen (cuidado del bebé)"
+  ],
+  "programas_sociales": {
+    "fundacion": "Fundación Colgate-Palmolive Colombia",
+    "año_creacion_fundacion": "1977",
+    "programa_sonrisas_brillantes": "Programa de educación en higiene bucal para niños en escuelas públicas",
+    "parques_donados": "6 parques recreacionales en Cali, Popayán, Medellín, Bogotá y Cartagena",
+    "centros_medicos": "Centros médicos y odontológicos en varias ciudades del país"
+  },
+  "sostenibilidad": {
+    "meta_empaques": "100% de empaques plásticos reciclables, reutilizables o compostables para 2025",
+    "reconocimientos": [
+      "Una de las Compañías más Éticas del Mundo (Ethisphere Institute)",
+      "100 puntos en el Índice de Equidad Corporativa (Human Rights Campaign)"
+    ],
+    "compromiso_ambiental": "Reducción de huella de carbono, uso responsable del agua y eliminación de residuos en vertederos"
+  },
+  "preguntas_frecuentes": [
+    {
+      "pregunta": "¿Cuál es el número de teléfono de servicio al cliente?",
+      "respuesta": "La línea gratuita de atención al cliente es 018000520800."
+    },
+    {
+      "pregunta": "¿Cuáles son los horarios de atención?",
+      "respuesta": "Línea telefónica: Lunes a Viernes 8:00 AM - 6:00 PM, Sábados 8:00 AM - 1:00 PM. WhatsApp: Lunes a Viernes 7:00 AM - 7:00 PM, Sábados 8:00 AM - 2:00 PM."
+    },
+    {
+      "pregunta": "¿Cuáles son las sedes en Colombia?",
+      "respuesta": "Colgate-Palmolive tiene su planta de producción y oficinas principales en Cali (Yumbo, Valle del Cauca), una oficina comercial en Bogotá y un centro de distribución en Medellín."
+    },
+    {
+      "pregunta": "¿Cuál es el NIT de la empresa?",
+      "respuesta": "El NIT de Colgate-Palmolive Compañía en Colombia es 890300546-6."
+    },
+    {
+      "pregunta": "¿Cómo contactar por WhatsApp?",
+      "respuesta": "Puede contactar a Colgate-Palmolive Colombia por WhatsApp al +57 317 6405757, disponible de Lunes a Viernes de 7:00 AM a 7:00 PM y Sábados de 8:00 AM a 2:00 PM."
+    },
+    {
+      "pregunta": "¿Cuáles son las marcas de Colgate-Palmolive en Colombia?",
+      "respuesta": "Las principales marcas son: Colgate, Palmolive, Protex, Speed Stick, Lady Speed Stick, Suavitel, Fabuloso, Vel Rosita, Ajax y Mennen."
+    },
+    {
+      "pregunta": "¿Dónde queda la sede principal en Colombia?",
+      "respuesta": "La sede principal de Colgate-Palmolive en Colombia está ubicada en Yumbo, Valle del Cauca (Cali)."
+    },
+    {
+      "pregunta": "¿Qué es la Fundación Colgate-Palmolive?",
+      "respuesta": "Es una fundación creada en 1977 con la misión de impulsar el desarrollo social de la comunidad colombiana, con énfasis en la niñez. Ha construido 6 parques recreacionales y establecido centros médicos y odontológicos."
+    },
+    {
+      "pregunta": "¿Cuál es el sitio web oficial?",
+      "respuesta": "El sitio web oficial de Colgate-Palmolive Colombia es https://www.colgatepalmolive.com.co"
+    },
+    {
+      "pregunta": "¿Cuándo fue fundada la empresa?",
+      "respuesta": "Colgate-Palmolive fue fundada en 1806 por William Colgate en Nueva York, Estados Unidos."
+    }
+  ]
+}

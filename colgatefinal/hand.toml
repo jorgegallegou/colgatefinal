@@ -1,0 +1,105 @@
+name = "colgate-assistant"
+module = "builtin:chat"
+version = "1.0.0"
+description = "Asistente corporativo inteligente de Colgate-Palmolive Colombia"
+tool_allowlist = ["memory_store", "memory_recall", "knowledge_query"]
+
+[model]
+provider = "mistral"
+model = "mistral-small-latest"
+temperature = 0.3
+
+system_prompt = """
+Eres un asistente virtual experto en Colgate-Palmolive Colombia.
+Tu tarea es responder preguntas sobre la empresa usando exclusivamente
+la informacion de tu memoria corporativa y el historial de conversacion.
+
+Si la pregunta espera un dato puntual como telefono, horario, NIT, sede,
+marca o sitio web, responde directamente desde tu contexto corporativo.
+
+Si la pregunta espera una explicacion o contexto como historia, valores,
+cultura, operaciones o sostenibilidad, elabora una respuesta completa.
+
+RESTRICCIONES:
+- Responde siempre en espanol formal y conciso.
+- Si el usuario saluda, responde cordialmente recordando tu rol.
+- Responde UNICAMENTE con informacion de tu contexto corporativo.
+- Si no tienes informacion suficiente remite al 018000520800.
+- Nunca inventes datos, cifras o declaraciones.
+- Nunca respondas en ingles.
+
+FORMATO (canal WhatsApp):
+- Usa *texto* para negrita (un solo asterisco). Nunca uses ** doble asterisco.
+- Usa _texto_ para cursiva. Nunca uses __ doble guion bajo.
+- Usa guiones (-) para listas. Nunca uses encabezados Markdown (###, ##, #).
+- Respuestas cortas y directas, sin bloques de codigo ni tablas.
+"""
+
+[memory]
+vector_store = false
+kv_store = true
+episodic_memory = false
+semantic_memory = false
+summary_memory = false
+working_memory = true
+top_k = 3
+
+# Opcion B - Collector Hand: Inteligencia competitiva programada
+[[hands]]
+name = "colgate-intelligence-hand"
+type = "collector"
+description = "Monitor de inteligencia competitiva en la industria de higiene y cuidado personal"
+schedule = "0 */6 * * *"
+lang = "es"
+store_to_memory = true
+output_format = "markdown_summary"
+alert_keywords = ["crisis", "recall", "retiro", "demanda", "alerta", "competencia"]
+
+targets = [
+    "Colgate-Palmolive Colombia noticias",
+    "higiene bucal Colombia mercado tendencias",
+    "Procter Gamble Crest Colombia",
+    "Unilever Dove Colombia competencia",
+    "pasta de dientes Colombia precio consumidor",
+    "productos limpieza hogar Colombia lanzamiento"
+]
+
+sources = ["web", "news"]
+
+# Opcion C - Custom Hand: Monitor de calidad de servicio al consumidor
+[[hands]]
+name = "colgate-service-hand"
+type = "custom"
+description = "Monitoreo de retroalimentacion del consumidor y calidad de servicio en canales digitales"
+schedule = "0 9 * * 1"
+lang = "es"
+store_to_memory = true
+output_format = "json_report"
+alert_keywords = ["queja", "reclamo", "defectuoso", "problema", "mal servicio"]
+
+targets = [
+    "Colgate Colombia redes sociales opinion",
+    "Colgate Colombia comentarios consumidores",
+    "Palmolive Colombia resenas productos"
+]
+
+sources = ["web", "social"]
+report_destination = "memory"
+
+# Bridge nativo de WhatsApp Web (Baileys, puerto 3009)
+[channels.whatsapp]
+enabled = true
+port = 3009
+token_env = "WA_ACCESS_TOKEN"
+session_name = "colgate-co"
+max_message_length = 4096
+
+welcome_message = """Bienvenido al asistente virtual de *Colgate-Palmolive Colombia*.
+
+Puedo ayudarte con:
+- Informacion de productos y marcas
+- Canales y horarios de atencion
+- Historia y valores de la empresa
+- Programas sociales y sostenibilidad
+
+Digite su pregunta en cualquier momento."""
