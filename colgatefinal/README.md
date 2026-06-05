@@ -1,125 +1,125 @@
-# Colgate-Palmolive Colombia — WhatsApp Conversational Agent
+# Agente Conversacional Corporativo — Colgate-Palmolive Colombia
 
-> Corporate AI agent deployed on WhatsApp. Answers consumer queries 24/7 using RAG over real company data, with autonomous competitive intelligence running in the background.
+> Agente de IA desplegado en WhatsApp. Atiende consultas de consumidores las 24 horas mediante RAG sobre datos reales de la empresa, con vigilancia competitiva autónoma ejecutándose en segundo plano.
 
 ![Python](https://img.shields.io/badge/Python-3.14-blue)
 ![OpenFang](https://img.shields.io/badge/OpenFang-0.6.9-orange)
 ![Mistral](https://img.shields.io/badge/Mistral-small--latest-purple)
-![License](https://img.shields.io/badge/License-Academic-lightgrey)
+![Licencia](https://img.shields.io/badge/Licencia-Académica-lightgrey)
 
 ---
 
-## Overview
+## Descripción general
 
-This project implements a production-grade conversational agent for Colgate-Palmolive Colombia using **OpenFang 0.6.9** as the agent operating system. The agent is accessible via WhatsApp and is backed by a knowledge base built from official company sources (web scraping, Wikipedia, YouTube).
+Este proyecto implementa un agente conversacional corporativo para Colgate-Palmolive Colombia usando **OpenFang 0.6.9** como sistema operativo agéntico. El agente es accesible vía WhatsApp y está respaldado por una base de conocimiento construida a partir de fuentes oficiales de la empresa (scraping web, Wikipedia, YouTube).
 
-Key capabilities:
+Capacidades principales:
 
-- **Real-time Q&A** — answers questions about products, stores, history, sustainability and contact info
-- **Per-user session isolation** — each phone number gets its own conversation context
-- **RAG retrieval** — 235 knowledge fragments indexed in a vector store (Mistral Embeddings)
-- **Autonomous Hands** — background agents that collect competitive intelligence every 6 hours
+- **Respuestas en tiempo real** — productos, puntos de venta, historia, sostenibilidad y contacto
+- **Aislamiento de sesiones por usuario** — cada número de teléfono tiene su propio contexto de conversación
+- **Recuperación semántica (RAG)** — 235 fragmentos indexados en un Vector Store con Mistral Embeddings
+- **Hands autónomos** — agentes en background que recolectan inteligencia competitiva cada 6 horas
 
 ---
 
-## Architecture
+## Arquitectura
 
 ```
-WhatsApp User
+Usuario WhatsApp
       │
-      │  WhatsApp Web Protocol (WebSocket)
+      │  Protocolo WhatsApp Web (WebSocket)
       ▼
 ┌──────────────────────────────────────┐
-│  Baileys Gateway                     │
-│  Node.js · Port 3009                 │
+│  Gateway Baileys                     │
+│  Node.js · Puerto 3009               │
 │  ~/.openfang/whatsapp-gateway/       │
 └─────────────────┬────────────────────┘
                   │  POST /api/agents/{uuid}/message?session_id={sid}
                   ▼
 ┌──────────────────────────────────────┐
 │  OpenFang Kernel                     │
-│  Rust · Port 4200                    │
+│  Rust · Puerto 4200                  │
 │                                      │
-│  Agent: colgate-assistant            │
-│  ├─ KV Store   (NIT, phones, HQ)     │
-│  ├─ Vector Store (235 fragments)     │
-│  ├─ JSONL sessions (per user)        │
-│  └─ Autonomous Hands (cron)          │
+│  Agente: colgate-assistant           │
+│  ├─ KV Store      (NIT, contactos)   │
+│  ├─ Vector Store  (235 fragmentos)   │
+│  ├─ Sesiones JSONL (por usuario)     │
+│  └─ Hands autónomos (cron)           │
 └─────────────────┬────────────────────┘
                   │  HTTPS
                   ▼
-        Mistral AI Cloud
-      mistral-small-latest
+          Mistral AI Cloud
+       mistral-small-latest
 ```
 
 ---
 
-## Prerequisites
+## Requisitos previos
 
-| Requirement | Version | Notes |
+| Requisito | Versión | Notas |
 |---|---|---|
-| [OpenFang](https://openfang.sh) | 0.6.9 | Agent OS — install with `curl -fsSL https://openfang.sh/install \| sh` |
-| Node.js | 18+ | For the Baileys WhatsApp gateway |
-| Python | 3.14 | Managed with `uv` |
-| [Mistral AI API key](https://console.mistral.ai) | — | Free tier available |
+| [OpenFang](https://openfang.sh) | 0.6.9 | Agent OS — instalar con `curl -fsSL https://openfang.sh/install \| sh` |
+| Node.js | 18+ | Para el gateway Baileys de WhatsApp |
+| Python | 3.14 | Gestionado con `uv` |
+| [Mistral AI API key](https://console.mistral.ai) | — | Nivel gratuito disponible |
 
 ---
 
-## Getting Started
+## Inicio rápido
 
-### 1. Clone and configure
+### 1. Clonar y configurar
 
 ```bash
 git clone https://github.com/jorgegallegou/colgatefinal.git
 cd colgatefinal
 
 cp .env.example .env
-# Fill in MISTRAL_API_KEY, WA_ACCESS_TOKEN, OPENFANG_AGENT_ID
+# Completar: MISTRAL_API_KEY, WA_ACCESS_TOKEN, OPENFANG_AGENT_ID
 ```
 
-### 2. Install Python dependencies
+### 2. Instalar dependencias Python
 
 ```bash
 pip install uv
 uv sync
 ```
 
-### 3. Start OpenFang and register the agent
+### 3. Iniciar OpenFang y registrar el agente
 
 ```bash
 openfang start
 python main.py setup
 ```
 
-`setup` verifies OpenFang connectivity, validates the Mistral API key, and registers `colgate-assistant` from `hand.toml`.
+`setup` verifica la conexión con OpenFang, valida la API key de Mistral y registra `colgate-assistant` desde `hand.toml`.
 
-### 4. Load the knowledge base
+### 4. Cargar la base de conocimiento
 
 ```bash
 python main.py ingest
 ```
 
-Injects structured data (NIT, phones, offices) into the KV Store and 235 text fragments into the Vector Store.
+Inyecta datos estructurados (NIT, teléfonos, sedes) en el KV Store y 235 fragmentos de texto en el Vector Store.
 
-### 5. Activate autonomous Hands
+### 5. Activar Hands autónomos
 
 ```bash
 python main.py hand
 ```
 
-Starts `colgate-intelligence-hand` (every 6 hours) and `colgate-service-hand` (Mondays 9 AM).
+Inicia `colgate-intelligence-hand` (cada 6 horas) y `colgate-service-hand` (lunes 9 AM).
 
-### 6. Start the WhatsApp gateway
+### 6. Iniciar el gateway de WhatsApp
 
 ```powershell
 cd $env:USERPROFILE\.openfang\whatsapp-gateway
-$env:OPENFANG_DEFAULT_AGENT = "<agent-uuid>"
+$env:OPENFANG_DEFAULT_AGENT = "<uuid-del-agente>"
 $env:OPENFANG_URL = "http://127.0.0.1:4200"
 node index.js
-# Scan the QR code with WhatsApp on first run
+# Escanear el código QR con WhatsApp en el primer arranque
 ```
 
-### 7. Verify
+### 7. Verificar el estado
 
 ```bash
 python main.py status
@@ -127,90 +127,90 @@ python main.py status
 
 ---
 
-## Configuration
+## Configuración
 
-All secrets are loaded from `.env`. Copy `.env.example` to get started — it contains no real credentials.
+Todos los secretos se cargan desde `.env`. Copie `.env.example` para comenzar — no contiene credenciales reales.
 
-| Variable | Required | Description |
+| Variable | Requerida | Descripción |
 |---|---|---|
-| `MISTRAL_API_KEY` | Yes | Mistral AI API key |
-| `WA_ACCESS_TOKEN` | Yes | WhatsApp Business access token |
-| `WA_PHONE_NUMBER_ID` | Yes | WhatsApp Business phone number ID |
-| `WA_VERIFY_TOKEN` | Yes | Webhook verification token (any string) |
-| `OPENFANG_URL` | No | OpenFang daemon URL (default: `http://127.0.0.1:4200`) |
-| `OPENFANG_AGENT_ID` | Yes | Agent UUID — get it with `openfang agent list` |
+| `MISTRAL_API_KEY` | Sí | API key de Mistral AI |
+| `WA_ACCESS_TOKEN` | Sí | Token de acceso WhatsApp Business |
+| `WA_PHONE_NUMBER_ID` | Sí | ID del número de teléfono WhatsApp Business |
+| `WA_VERIFY_TOKEN` | Sí | Token de verificación del webhook (valor libre) |
+| `OPENFANG_URL` | No | URL del daemon OpenFang (por defecto: `http://127.0.0.1:4200`) |
+| `OPENFANG_AGENT_ID` | Sí | UUID del agente — obtener con `openfang agent list` |
 
 ---
 
-## Autonomous Hands
+## Hands Autónomos
 
-Hands are background agents defined in `hand.toml` that run on a schedule without human intervention.
+Los Hands son agentes en background definidos en `hand.toml` que se ejecutan de forma programada sin intervención humana.
 
-| Hand | Type | Schedule | Purpose |
+| Hand | Tipo | Frecuencia | Propósito |
 |---|---|---|---|
-| `colgate-intelligence-hand` | Collector | Every 6 hours | Competitive intelligence: P&G, Unilever, market trends |
-| `colgate-service-hand` | Custom | Mondays 9 AM | Consumer sentiment monitoring on social media |
+| `colgate-intelligence-hand` | Collector | Cada 6 horas | Vigilancia competitiva: P&G, Unilever, tendencias del mercado |
+| `colgate-service-hand` | Custom | Lunes 9 AM | Monitoreo de opiniones de consumidores en redes sociales |
 
-Intelligence reports are stored in the agent's memory and are available for RAG queries.
+Los reportes de inteligencia se almacenan en la memoria del agente y quedan disponibles para consultas RAG.
 
 ---
 
-## Project Structure
+## Estructura del proyecto
 
 ```
 colgatefinal/
 │
-├── hand.toml                  # Agent manifest: model, memory, Hands, WhatsApp channel
+├── hand.toml                  # Manifiesto del agente: modelo, memoria, Hands y canal WA
 ├── main.py                    # CLI: setup / ingest / hand / status / whatsapp
-├── pyproject.toml             # Python dependencies (uv)
-├── .env.example               # Environment variables template
+├── pyproject.toml             # Dependencias Python (uv)
+├── .env.example               # Plantilla de variables de entorno
 │
 ├── scripts/
-│   ├── ingest.py              # Loads KB into OpenFang KV Store and Vector Store
-│   └── whatsapp_bridge.py     # WhatsApp channel configuration helper
+│   ├── ingest.py              # Inyección de KB en KV Store y Vector Store de OpenFang
+│   └── whatsapp_bridge.py     # Helper de configuración del canal WhatsApp
 │
-├── webhook_server.py          # Alternative FastAPI webhook (Meta Cloud API)
-├── tsne_analysis.py           # Intent clustering analysis via t-SNE (Mistral Embeddings)
+├── webhook_server.py          # Webhook FastAPI alternativo (Meta Cloud API)
+├── tsne_analysis.py           # Análisis de clustering de intenciones vía t-SNE
 │
-├── informe.css                # PDF stylesheet (Inter + JetBrains Mono)
-├── INFORME_TECNICO.md         # Technical report
+├── informe.css                # Estilos del PDF (Inter + JetBrains Mono)
+├── INFORME_TECNICO.md         # Informe técnico del proyecto
 │
 └── data/
-    ├── knowledge_base_clean.txt   # Clean knowledge base (~235 fragments)
-    └── datos_estructurados.json   # Structured data: NIT, phones, offices, brands
+    ├── knowledge_base_clean.txt   # Base de conocimiento (~235 fragmentos)
+    └── datos_estructurados.json   # NIT, teléfonos, sedes, marcas
 ```
 
-> The WhatsApp gateway (`index.js`) is not versioned — it contains the active Baileys session, equivalent to the account's login credentials.
+> El gateway de WhatsApp (`index.js`) no está en el repositorio — contiene la sesión activa de Baileys, equivalente a las credenciales de acceso de la cuenta.
 
 ---
 
-## Intent Clustering Analysis
+## Análisis de clustering de intenciones
 
-Visualizes user query clusters by detected intent using Mistral Embeddings.
+Visualiza los tipos de consulta de los usuarios agrupados por intención usando Mistral Embeddings y t-SNE.
 
 ```bash
 uv run python tsne_analysis.py
-# Output: tsne_conversaciones.png
+# Salida: tsne_conversaciones.png
 ```
 
-Falls back to 20 representative example sessions when fewer than 5 real sessions exist.
+Con menos de 5 sesiones reales el script usa un conjunto de 20 conversaciones de ejemplo representativas.
 
 ---
 
-## Tech Stack
+## Stack tecnológico
 
-| Layer | Technology |
+| Capa | Tecnología |
 |---|---|
-| Agent OS | OpenFang 0.6.9 (Rust kernel, WASM sandbox) |
-| WhatsApp bridge | Baileys `@whiskeysockets/baileys` (Node.js) |
+| Agent OS | OpenFang 0.6.9 (kernel Rust, sandbox WASM) |
+| Canal WhatsApp | Baileys `@whiskeysockets/baileys` (Node.js) |
 | LLM | Mistral AI `mistral-small-latest` |
-| Embeddings | Mistral `mistral-embed` (1024 dims) |
+| Embeddings | Mistral `mistral-embed` (1024 dimensiones) |
 | Scripts | Python 3.14 + `uv` |
 | Webhook | FastAPI + uvicorn |
-| Visualization | scikit-learn, matplotlib |
+| Visualización | scikit-learn, matplotlib |
 
 ---
 
-## License
+## Licencia
 
-Academic project — Universidad Autónoma de Occidente, 2026.
+Proyecto académico — Universidad Autónoma de Occidente, 2026.
