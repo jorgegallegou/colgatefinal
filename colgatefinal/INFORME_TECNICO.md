@@ -398,8 +398,7 @@ colgatefinal/
 ├── tsne_analysis.py           # Análisis t-SNE de intenciones de usuario (bonus +10 %)
 │
 ├── informe.css                # Estilos para generación del PDF (tipografía Inter)
-├── INFORME_TECNICO.md         # Informe técnico completo (fuente Markdown)
-├── INFORME_TECNICO.pdf        # Informe técnico compilado (entrega)
+├── INFORME_TECNICO.md         # Informe técnico completo
 │
 └── data/
     ├── knowledge_base_clean.txt   # Base de conocimiento (~235 fragmentos)

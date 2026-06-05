@@ -25,6 +25,7 @@ build/
 
 # Artefactos de build / sesion sensible
 *.html
+*.pdf
 whatsapp_qr.png
 *.png
 

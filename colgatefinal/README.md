@@ -123,9 +123,8 @@ colgatefinal/
 ├── webhook_server.py          # FastAPI webhook alternativo (Meta Cloud API)
 ├── tsne_analysis.py           # Análisis t-SNE de intenciones de usuario (bonus)
 │
-├── informe.css                # Estilos del PDF (tipografía Inter + JetBrains Mono)
-├── INFORME_TECNICO.md         # Informe técnico (fuente)
-├── INFORME_TECNICO.pdf        # Informe técnico (entrega)
+├── informe.css                # Estilos para generación del PDF (Inter + JetBrains Mono)
+├── INFORME_TECNICO.md         # Informe técnico
 │
 └── data/
     ├── knowledge_base_clean.txt   # Base de conocimiento (~235 fragmentos)
