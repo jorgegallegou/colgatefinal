@@ -112,14 +112,37 @@ report_destination = "memory"
 
 **Propósito:** Seguimiento semanal de retroalimentación de consumidores en canales digitales. Genera un reporte JSON que el agente puede utilizar para identificar patrones de insatisfacción.
 
-### 4.3 Estado de activación verificado
+### 4.3 Activación vía CLI — Evidencia de ejecución
+
+Los Hands se activan con el comando `openfang hand activate <id>`:
+
+```bash
+$ openfang hand activate collector --name colgate-intelligence
+Hand 'collector' activated
+  instance : a5d6fdcf-5212-45f0-bcdb-db94559d1e9d
+  name     : colgate-intelligence
+  agent    : colgate-intelligence
+
+$ openfang hand activate lead --name colgate-leads
+Hand 'lead' activated
+  instance : 813038f7-b23a-440e-849d-d8e34ee65a7f
+  name     : colgate-leads
+  agent    : colgate-leads
+```
+
+Estado verificado con `curl http://127.0.0.1:4200/api/agents` (5 de junio de 2026, 22:00):
 
 ```
-colgate-intelligence-hand   2a658329-...   Running
-colgate-service-hand        2dbac136-...   Running
-collector-hand              5bb35868-...   Running  (orquestador)
-researcher-hand             52a6d4df-...   Running  (investigación)
+AGENTE                              ESTADO       UUID
+------------------------------------------------------------------------
+colgate-leads                       Running      c28987f0-2c95-555a-a0d6
+colgate-intelligence-hand           Running      2a658329-d5ce-5766-8d49
+colgate-service-hand                Running      2dbac136-e137-5eb2-8106
+colgate-assistant                   Running      4fe45ca6-d6dc-4ca6-8590
+colgate-intelligence                Running      eaacc74d-d002-5b9e-8481
 ```
+
+Los agentes `colgate-intelligence-hand` y `colgate-service-hand` definidos en `hand.toml` son los que ejecutan el trabajo autónomo programado. Los agentes `colgate-intelligence` y `colgate-leads` son las instancias activadas interactivamente vía CLI para demostración.
 
 ---
 
@@ -219,24 +242,68 @@ Usuario WhatsApp
 
 ---
 
-## 8. Resultados y Prueba en Vivo
+## 8. Evidencia de Comportamiento Autónomo — Intelligence Report Real
+
+El agente `colgate-intelligence-hand` ejecutó **2 ciclos autónomos** el 5 de junio de 2026 (18:44 y 19:43), procesando 4 fuentes web en cada ciclo sin intervención humana. A continuación, extracto del Ciclo 2:
+
+---
+
+**Intelligence Report: Colgate-Palmolive | Fecha: 2026-06-05 | Ciclo: 2 | Fuentes: 4**
+
+**Cambios clave detectados:**
+- **Liderazgo:** Ram Raghavan designado **Global Chief Marketing Officer** (junio 2026). Responsable de Colgate, Palmolive, Hill's Pet Nutrition, elmex, Suavitel, Fabuloso y EltaMD.
+- **Innovación:** Lanzamiento de **Colgate Optic White Pro Series** (marzo 2026) — 5% Hydrogen Peroxide Complex, tecnología ActivShine, MSRP $9.99. Segmento: blanqueamiento premium en casa.
+- **Inversores:** Colgate-Palmolive India programa reuniones para junio 2026 con Bank of America India Conference y J.P. Morgan Fireside Chat Series.
+- **Sostenibilidad:** Estrategia 2030 confirmada: 100% empaques reciclables (actualmente 96%), 83% energía renovable en operaciones, meta cero emisiones netas para 2040.
+
+**Mapa de entidades detectadas:**
+
+| Entidad | Tipo | Relevancia |
+|---|---|---|
+| Ram Raghavan | Persona | Global CMO desde junio 2026 |
+| Colgate Optic White Pro Series | Producto | Nuevo lanzamiento premium |
+| Bank of America / J.P. Morgan | Organización | Inversores institucionales |
+| Estrategia 2030 | Iniciativa | Sostenibilidad corporativa |
+
+*Reporte almacenado automáticamente en memoria del agente → disponible para consultas RAG del `colgate-assistant`.*
+
+---
+
+## 9. Resultados y Prueba en Vivo — WhatsApp
 
 El sistema fue probado en producción con 3 usuarios reales simultáneos:
 - **Natalia** (contacto de prueba inicial)
 - **Daniel Gallego** (segundo teléfono, sesión aislada confirmada)
 - **Jhonathan** (usuario UAO, conversación de 18 mensajes documentada)
 
-Capacidades verificadas:
-- Historia de la empresa (fundación 1806, llegada a Colombia 1943)
+Capacidades verificadas vía WhatsApp:
+- Historia de la empresa (fundación 1806, llegada a Colombia 1943, planta Yumbo)
 - NIT: 890.300.546-6
 - Línea gratuita: 018000520800
 - Productos por categoría (dental care, hogar, personal care, mascotas Hill's)
 - Distribuidores por ciudad (Éxito, Carulla, D1, Jumbo en Cali)
 - Políticas ambientales (cero emisiones netas 2040, empaques reciclables 2025)
 
+**Conversación documentada (Jhonathan, 5 de junio 2026):**
+
+```
+[16:09] Jhonathan: Hola
+[16:09] Bot: Hola, soy el asistente virtual de Colgate-Palmolive Colombia.
+             ¿En qué puedo ayudarte?
+[16:10] Jhonathan: Cual es la historia de la compañia?
+[16:10] Bot: Colgate-Palmolive fue fundada en 1806 por William Colgate en
+             Nueva York... llegó a Colombia en 1943, estableciéndose en
+             Cartagena. Actualmente opera desde Yumbo, Valle del Cauca...
+[16:11] Jhonathan: Cuales son sus politicas ambientales?
+[16:11] Bot: *Reducción de emisiones:* cero emisiones netas para 2040...
+             *Energías renovables:* 83% de operaciones con energía renovable...
+[16:11] Jhonathan: Cual es el NIT?
+[16:11] Bot: El NIT de Colgate-Palmolive Colombia es *890.300.546-6*.
+```
+
 ---
 
-## 9. Repositorio y Estructura del Proyecto
+## 10. Repositorio y Estructura del Proyecto
 
 ```
 colgatefinal/
@@ -269,10 +336,12 @@ C:\Users\JM\.openfang\
 1. `4e87913` — Initial commit: agente base + canal WhatsApp
 2. `1f03a7f` — Fix multi-user isolation and WhatsApp format
 3. `09aa109` — Fix greeting contamination: explicit name-free greeting instruction
+4. `db98415` — Add PDF report, t-SNE visualization, and analysis dependencies
+5. `a2e5b8d` — Add hands evidence, intelligence reports, README
 
 ---
 
-## 10. Conclusiones
+## 11. Conclusiones
 
 - **OpenFang Agent OS** demuestra ser una solución de producción robusta para agentes conversacionales corporativos, superando las limitaciones de los prototipos LangChain/Streamlit en cuanto a multi-usuario, autonomía y canales de mensajería.
 - El **sistema de Hands** permite que el agente no sea únicamente reactivo, sino que acumule inteligencia competitiva de forma autónoma sin intervención humana.
