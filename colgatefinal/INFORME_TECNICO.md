@@ -6,8 +6,10 @@
 |---|---|
 | Institución | Universidad Autónoma de Occidente |
 | Asignatura | Técnicas de Inteligencia Artificial |
-| Autor | Jorge Mario Gallego Uribe |
-| Correo | jorge_mario.gallego@uao.edu.co |
+| Autores | Jorge Castaño López |
+| | Natalia Arias Londoño |
+| | Jorge Mario Gallego Uribe |
+| | Jhonathan Leandro Clavijo Troches |
 | Fecha | 5 de junio de 2026 |
 | Repositorio | https://github.com/jorgegallegou/colgatefinal |
 
