@@ -112,6 +112,15 @@ tr:last-child td {
   border-bottom: none;
 }
 
+/* ── Imágenes ─────────────────────────────────────────────────────────────── */
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.2em auto;
+}
+
 /* ── Código ───────────────────────────────────────────────────────────────── */
 
 code {
