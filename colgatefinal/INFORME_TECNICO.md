@@ -358,6 +358,20 @@ uv run python tsne_analysis.py
 
 Con menos de 5 sesiones reales el script usa un conjunto de 20 conversaciones de ejemplo representativas.
 
+### Gráfico generado
+
+![Análisis t-SNE — Intenciones de usuarios Colgate-Palmolive Colombia](tsne_conversaciones.png)
+
+### Conclusiones de los clústeres
+
+El análisis revela tres hallazgos principales:
+
+**Clúster dominante: Productos y marcas.** La mayoría de las consultas giran en torno al portafolio de productos. Los consumidores preguntan sobre características, composición y diferencias entre referencias de pasta dental, jabones y cremas. Esto confirma que la base de conocimiento debe mantenerse actualizada ante cada lanzamiento de producto.
+
+**Clúster secundario: Puntos de venta.** El segundo grupo más denso concentra preguntas sobre dónde comprar y a qué precio. Indica una oportunidad de integrar un localizador de tiendas en tiempo real como herramienta del agente.
+
+**Clúster de escalamiento: Atención al cliente.** Un segmento visible de usuarios busca contacto humano — teléfonos, correos, horarios. El agente maneja correctamente estos casos derivando a la línea 018000520800, pero el volumen sugiere que una proporción de consultas supera la capacidad de respuesta automatizada.
+
 ---
 
 ## 12. Estructura del Repositorio
