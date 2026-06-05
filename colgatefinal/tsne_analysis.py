@@ -10,11 +10,13 @@ import json
 import os
 import glob
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")  # non-interactive backend
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
-from mistralai import Mistral
+from mistralai.client import Mistral
 
 # ── Configuración ───────────────────────────────────────────────────────────
 
@@ -117,7 +119,7 @@ def plot_tsne(embeddings: np.ndarray, labels: list[str], output_path: str):
     tsne = TSNE(
         n_components=2,
         perplexity=perplexity,
-        n_iter=1000,
+        max_iter=1000,
         random_state=42,
         learning_rate="auto",
         init="pca",
@@ -151,25 +153,30 @@ def plot_tsne(embeddings: np.ndarray, labels: list[str], output_path: str):
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"Gráfico guardado en: {output_path}")
-    plt.show()
+    print(f"Grafico guardado en: {output_path}")
+    plt.close()
 
 
 # ── 5. Reporte de clústeres ──────────────────────────────────────────────────
 
 def cluster_report(sessions: list[dict], labels: list[str]):
+    import sys
     from collections import Counter
+    # Force UTF-8 output
+    if sys.stdout.encoding != "utf-8":
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     counts = Counter(labels)
     total = len(labels)
-    print("\n" + "="*50)
-    print("REPORTE DE INTENCIONES — COLGATE-PALMOLIVE COLOMBIA")
-    print("="*50)
+    print("\n" + "="*55)
+    print("REPORTE DE INTENCIONES - COLGATE-PALMOLIVE COLOMBIA")
+    print("="*55)
     print(f"Total de sesiones analizadas: {total}")
     print()
     for intent, count in counts.most_common():
         pct = (count / total) * 100
-        bar = "█" * int(pct / 3)
-        print(f"  {intent:30} {bar:20} {count:3} ({pct:.1f}%)")
+        bar = "#" * int(pct / 3)
+        print(f"  {intent:<30} {bar:<20} {count:3} ({pct:.1f}%)")
     print()
 
     print("ANÁLISIS DE CLÚSTERES:")
