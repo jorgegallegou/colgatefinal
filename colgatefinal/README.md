@@ -204,6 +204,27 @@ python main.py status
 
 Reporta: estado del daemon, UUID del agente, pares en el KV Store, estado del canal WhatsApp y Hands activos.
 
+### Reinicio (sesión ya configurada)
+
+Cuando se cierra la terminal y se quiere volver a levantar el bot sin reconfigurar nada:
+
+**Terminal 1 — daemon OpenFang:**
+
+```powershell
+openfang start
+```
+
+**Terminal 2 — gateway WhatsApp:**
+
+```powershell
+cd $env:USERPROFILE\.openfang\whatsapp-gateway
+$env:OPENFANG_DEFAULT_AGENT = "4fe45ca6-d6dc-4ca6-8590-89101cc9fab3"
+$env:OPENFANG_URL = "http://127.0.0.1:4200"
+node index.js
+```
+
+No solicita QR nuevamente — la sesión de Baileys queda persistida en `auth_store/`.
+
 ---
 
 ## Configuración
