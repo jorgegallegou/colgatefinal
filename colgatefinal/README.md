@@ -91,9 +91,6 @@ Usuario de WhatsApp
 │  · Entrega la respuesta al usuario      │
 └──────────────────┬──────────────────────┘
                    │
-      ─ ─ ─ ─ ─ ─ ┤  (alternativa: webhook_server.py
-                   │   FastAPI · Puerto 8000 · Meta Cloud API)
-                   │
                    │  POST /api/agents/{uuid}/message?session_id={sid}
                    ▼
 ┌─────────────────────────────────────────┐
@@ -120,7 +117,6 @@ Usuario de WhatsApp
 └─────────────────────────────────────────┘
 ```
 
-**Nota sobre el webhook alternativo.** El repositorio incluye `webhook_server.py` (FastAPI + uvicorn), un servidor webhook compatible con la Meta WhatsApp Cloud API oficial. Se usa cuando se prefiere la API de Meta sobre el canal nativo de OpenFang — por ejemplo, en despliegues cloud con dominio público y HTTPS donde Meta entrega los mensajes a una URL registrada en Developer Console. En producción se usó el Gateway Baileys porque se conecta directamente al protocolo WhatsApp Web mediante un QR, sin requerir número verificado en Meta ni configuración de webhook.
 
 ### Ciclo de vida de un mensaje
 
@@ -234,7 +230,6 @@ Todos los secretos se cargan desde `.env`. Copiar `.env.example` para comenzar.
 | LLM | Mistral AI `mistral-small-latest` |
 | Embeddings | Mistral `mistral-embed` (1024 dimensiones) |
 | Scripts | Python 3.14 + `uv` |
-| Webhook alternativo | FastAPI + uvicorn |
 | Visualización | scikit-learn, matplotlib |
 
 ---
@@ -253,7 +248,6 @@ colgatefinal/
 │   ├── ingest.py              # Inyección de KB en KV Store y Vector Store de OpenFang
 │   └── whatsapp_bridge.py     # Helper de configuración del canal WhatsApp
 │
-├── webhook_server.py          # Webhook FastAPI alternativo (Meta Cloud API)
 ├── tsne_analysis.py           # Análisis de clustering de intenciones vía t-SNE
 │
 └── data/
