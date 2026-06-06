@@ -23,9 +23,7 @@ build/
 .idea/
 *.swp
 
-# Artefactos de build / sesion sensible
-*.html
-*.pdf
+# Artefactos de sesion sensible
 whatsapp_qr.png
 *.png
 !tsne_conversaciones.png
