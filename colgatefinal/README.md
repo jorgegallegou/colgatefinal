@@ -67,7 +67,7 @@ El Módulo 3 presentaba dos rutas de implementación:
 
 **Decisión: Ruta B.** El proyecto requería tres capacidades que la Ruta A habría exigido implementar manualmente y que OpenFang provee como primitivas del sistema: (1) aislamiento de sesiones para usuarios simultáneos de WhatsApp, (2) canal WhatsApp sin código de integración y (3) ejecución autónoma de tareas de vigilancia competitiva en background. Construir estas tres piezas sobre LangChain habría multiplicado el tiempo de desarrollo sin aportar valor diferencial al proyecto.
 
-La única desventaja de la Ruta B es el acoplamiento a OpenFang. Este riesgo se mitiga: `main.py`, `scripts/ingest.py` y `webhook_server.py` son independientes del kernel; solo `hand.toml` y las llamadas a `openfang` CLI son específicas de la plataforma.
+La única desventaja de la Ruta B es el acoplamiento a OpenFang. Este riesgo se mitiga: `main.py` y `scripts/ingest.py` son independientes del kernel; solo `hand.toml` y las llamadas a `openfang` CLI son específicas de la plataforma.
 
 ---
 
@@ -213,9 +213,7 @@ Todos los secretos se cargan desde `.env`. Copiar `.env.example` para comenzar.
 | Variable | Requerida | Descripción |
 |---|---|---|
 | `MISTRAL_API_KEY` | Sí | API key de Mistral AI |
-| `WA_ACCESS_TOKEN` | Sí | Token de acceso WhatsApp Business |
-| `WA_PHONE_NUMBER_ID` | Sí | ID del número de teléfono WhatsApp Business |
-| `WA_VERIFY_TOKEN` | Sí | Token de verificación del webhook (valor libre) |
+| `WA_ACCESS_TOKEN` | Sí | Token guardado en el vault de OpenFang para autenticar el canal Baileys |
 | `OPENFANG_URL` | No | URL del daemon OpenFang (por defecto: `http://127.0.0.1:4200`) |
 | `OPENFANG_AGENT_ID` | Sí | UUID del agente — obtener con `openfang agent list` |
 
