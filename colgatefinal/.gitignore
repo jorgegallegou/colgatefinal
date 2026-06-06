@@ -28,6 +28,7 @@ build/
 *.pdf
 whatsapp_qr.png
 *.png
+!tsne_conversaciones.png
 
 # Claude Code
 .claude/

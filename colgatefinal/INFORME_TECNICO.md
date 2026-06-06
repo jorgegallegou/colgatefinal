@@ -168,46 +168,51 @@ El cambio más significativo es la **autonomía**: el agente del Módulo 3 no es
 ### 6.1 Diagrama de componentes
 
 ```
-WhatsApp User
+Usuario de WhatsApp
       │
-      │  WhatsApp Web Protocol (WebSocket)
+      │  Protocolo WhatsApp Web (WebSocket)
       ▼
 ┌─────────────────────────────────────────┐
-│  Baileys Gateway                        │
-│  Node.js · Port 3009                    │
+│  Gateway Baileys             [PRODUCCIÓN]│
+│  Node.js · Puerto 3009                  │
 │  ~/.openfang/whatsapp-gateway/index.js  │
 │                                         │
-│  · Receives inbound messages            │
-│  · Creates isolated session per phone   │
-│  · Strips Markdown for WhatsApp format  │
-│  · Delivers response back to user       │
+│  · Recibe mensajes entrantes            │
+│  · Crea sesión aislada por teléfono     │
+│  · Convierte Markdown a formato WA      │
+│  · Entrega la respuesta al usuario      │
 └──────────────────┬──────────────────────┘
+                   │
+      ─ ─ ─ ─ ─ ─ ┤  (alternativa: webhook_server.py
+                   │   FastAPI · Puerto 8000 · Meta Cloud API)
                    │
                    │  POST /api/agents/{uuid}/message?session_id={sid}
                    ▼
 ┌─────────────────────────────────────────┐
-│  OpenFang Kernel · Rust · Port 4200     │
+│  OpenFang Kernel · Rust · Puerto 4200   │
 │                                         │
-│  Agent: colgate-assistant               │
-│  UUID: 4fe45ca6-d6dc-4ca6-8590-...     │
+│  Agente: colgate-assistant              │
+│  UUID: 4fe45ca6-d6dc-4ca6-8590-…       │
 │                                         │
-│  Memory                                 │
-│  ├─ KV Store   — NIT, phones, offices   │
-│  ├─ Vector Store — 235 fragments (RAG)  │
-│  └─ JSONL sessions — one per user       │
+│  Memoria del agente                     │
+│  ├─ KV Store   — NIT, teléfonos, sedes  │
+│  ├─ Vector Store — 235 fragmentos (RAG) │
+│  └─ Sesiones JSONL — una por usuario    │
 │                                         │
-│  Autonomous Hands                       │
-│  ├─ colgate-intelligence-hand  (6h)     │
-│  └─ colgate-service-hand  (Mon 9 AM)    │
+│  Hands Autónomos (background)           │
+│  ├─ colgate-intelligence-hand  (c/ 6 h) │
+│  └─ colgate-service-hand  (lun. 9 AM)   │
 └──────────────────┬──────────────────────┘
                    │  HTTPS
                    ▼
 ┌─────────────────────────────────────────┐
 │  Mistral AI Cloud                       │
 │  mistral-small-latest · temp 0.3        │
-│  Average latency < 800 ms               │
+│  Latencia promedio < 800 ms             │
 └─────────────────────────────────────────┘
 ```
+
+**Nota sobre el webhook alternativo.** El repositorio incluye `webhook_server.py` (FastAPI + uvicorn), un servidor webhook compatible con la Meta WhatsApp Cloud API. Es el mecanismo estándar para entornos donde OpenFang no gestiona el canal nativo, por ejemplo en despliegues cloud con dominio público. En producción se usó el Gateway Baileys porque permite vinculación directa con el número de WhatsApp sin configuración de webhook en Meta Developer Console.
 
 ### 6.2 Ciclo de vida de un mensaje
 
@@ -222,9 +227,29 @@ WhatsApp User
 
 ---
 
-## 7. Decisiones Técnicas
+## 7. Selección de Ruta: A vs B
 
-### 7.1 OpenFang vs LangChain
+El Módulo 3 presentaba dos rutas de implementación:
+
+| Dimensión | Ruta A — Agente Custom | Ruta B — Agent OS (OpenFang) |
+|---|---|---|
+| **Orquestación** | LangChain / LlamaIndex sobre código propio | OpenFang 0.6.9 — kernel Rust con primitivas nativas |
+| **Gestión de sesiones** | Implementar desde cero (dict en memoria, Redis, etc.) | Nativa — `POST /api/agents/{id}/sessions` |
+| **Canal WhatsApp** | Librería externa + código de integración | Nativa — configuración en `hand.toml` |
+| **Autonomía / background** | Cron externo + worker manual | Hands — scheduler integrado en el kernel |
+| **Aislamiento de seguridad** | Sin sandbox (proceso Python compartido) | WASM — sandbox por módulo de agente |
+| **Infraestructura requerida** | FastAPI / Flask + base de datos + worker | Un proceso (`openfang start`) |
+| **Esfuerzo de despliegue** | Alto — múltiples servicios coordinados | Bajo — daemon único + CLI |
+
+**Decisión: Ruta B.** El proyecto requería tres capacidades que la Ruta A habría exigido implementar manualmente y que OpenFang provee como primitivas del sistema: (1) aislamiento de sesiones para usuarios simultáneos de WhatsApp, (2) canal WhatsApp sin código de integración y (3) ejecución autónoma de tareas de vigilancia competitiva en background. Construir estas tres piezas sobre LangChain habría multiplicado el tiempo de desarrollo sin aportar valor diferencial al proyecto.
+
+La única desventaja de la Ruta B es el acoplamiento a OpenFang — si la plataforma cambia su API, el código de integración debe actualizarse. Este riesgo se mitiga: `main.py`, `scripts/ingest.py` y `webhook_server.py` son independientes del kernel; solo `hand.toml` y las llamadas a `openfang` CLI son específicas de la plataforma.
+
+---
+
+## 8. Decisiones Técnicas
+
+### 8.1 OpenFang vs LangChain
 
 LangChain es una librería de orquestación. OpenFang es un sistema operativo para agentes. La diferencia determina qué debe construirse desde cero y qué está disponible nativamente:
 
@@ -238,7 +263,7 @@ LangChain es una librería de orquestación. OpenFang es un sistema operativo pa
 
 Para este proyecto, usar LangChain habría requerido implementar la lógica de sesiones, el canal WhatsApp y los jobs de background desde cero. OpenFang los provee como primitivas del sistema.
 
-### 7.2 Mistral API vs Ollama
+### 8.2 Mistral API vs Ollama
 
 El curso recomienda Ollama (inferencia local) para garantizar soberanía de datos. Este proyecto optó por **Mistral API** por las siguientes razones:
 
@@ -261,9 +286,9 @@ OpenFang detecta la instancia de Ollama en `localhost:11434` sin ninguna otra mo
 
 ---
 
-## 8. Base de Conocimiento Corporativo
+## 9. Base de Conocimiento Corporativo
 
-### 8.1 Fuentes de datos
+### 9.1 Fuentes de datos
 
 El conocimiento del agente fue construido en el Módulo 1 (Web Scraping) a partir de tres fuentes oficiales:
 
@@ -274,7 +299,7 @@ El conocimiento del agente fue construido en el Módulo 1 (Web Scraping) a parti
 | Canal YouTube oficial | Transcripciones de 8 videos corporativos | ~95 |
 | **Total** | | **~235 fragmentos** |
 
-### 8.2 Almacenamiento
+### 9.2 Almacenamiento
 
 Se utilizan dos tipos de memoria según la naturaleza de la información:
 
@@ -293,11 +318,11 @@ Los 235 fragmentos se vectorizan con `mistral-embed` (1024 dimensiones). Ante ca
 
 ---
 
-## 9. Hands — Operaciones Autónomas
+## 10. Hands — Operaciones Autónomas
 
 Los Hands son agentes en background definidos en `hand.toml` que se ejecutan según un calendario sin intervención humana.
 
-### 9.1 Hand de inteligencia competitiva
+### 10.1 Hand de inteligencia competitiva
 
 ```toml
 [[hands]]
@@ -316,7 +341,7 @@ store_to_memory = true
 
 Cada 6 horas busca en fuentes web y de noticias información sobre Colgate Colombia y sus competidores directos (P&G, Unilever). Los hallazgos se almacenan en la memoria del agente y quedan disponibles para consultas RAG.
 
-### 9.2 Hand de monitoreo de servicio
+### 10.2 Hand de monitoreo de servicio
 
 ```toml
 [[hands]]
@@ -329,7 +354,7 @@ output_format  = "json_report"
 
 Cada lunes a las 9:00 AM consolida opiniones de consumidores en redes sociales y genera un reporte JSON con patrones de insatisfacción.
 
-### 9.3 Activación — evidencia de ejecución
+### 10.3 Activación — evidencia de ejecución
 
 ```
 $ openfang hand activate collector --name colgate-intelligence-hand
@@ -355,7 +380,7 @@ colgate-service-hand      Running   2dbac136-e137-5eb2-8106
 
 ---
 
-## 10. Reporte de Inteligencia Autónomo
+## 11. Reporte de Inteligencia Autónomo
 
 El agente `colgate-intelligence-hand` ejecutó **2 ciclos autónomos** el 5 de junio de 2026 (18:44 y 19:43), procesando 4 fuentes web por ciclo sin intervención humana. A continuación el extracto del Ciclo 2.
 
@@ -372,11 +397,11 @@ El agente `colgate-intelligence-hand` ejecutó **2 ciclos autónomos** el 5 de j
 
 ---
 
-## 11. Validación en Producción
+## 12. Validación en Producción
 
 El sistema fue probado con **3 usuarios reales simultáneos** desde dispositivos diferentes: Natalia, Daniel Gallego y Jhonathan.
 
-### 11.1 Conversación registrada — Jhonathan, 5 de junio de 2026
+### 12.1 Conversación registrada — Jhonathan, 5 de junio de 2026
 
 ```
 16:09  Jhonathan  Hola
@@ -397,7 +422,7 @@ El sistema fue probado con **3 usuarios reales simultáneos** desde dispositivos
 16:11  Bot        El NIT de Colgate-Palmolive Colombia es *890.300.546-6*.
 ```
 
-### 11.2 Cobertura funcional verificada
+### 12.2 Cobertura funcional verificada
 
 | Dominio | Consultas verificadas |
 |---|---|
@@ -409,7 +434,7 @@ El sistema fue probado con **3 usuarios reales simultáneos** desde dispositivos
 
 ---
 
-## 12. Incidentes de Producción y Resolución
+## 13. Incidentes de Producción y Resolución
 
 | Incidente | Causa raíz | Solución implementada |
 |---|---|---|
@@ -418,7 +443,7 @@ El sistema fue probado con **3 usuarios reales simultáneos** desde dispositivos
 | Formato ilegible en WhatsApp | LLM generaba `###`, `**bold**`, `---` que WhatsApp no renderiza | Función `toWhatsApp()` — convierte `**` → `*`, elimina `###` |
 | Contaminación entre sesiones | Sesión global única + memoria diaria inyectaba contexto de otros usuarios | Sesión aislada por teléfono + instrucción explícita en system prompt |
 
-### 12.1 Análisis del bug de contaminación de sesiones
+### 13.1 Análisis del bug de contaminación de sesiones
 
 Este fue el incidente de mayor impacto. La cadena de fallo:
 
@@ -434,18 +459,18 @@ Solución en tres capas:
 
 ---
 
-## 13. Análisis t-SNE de Intenciones
+## 14. Análisis t-SNE de Intenciones
 
 Se implementó un análisis de clustering sobre las conversaciones del agente para identificar los patrones de consulta de los usuarios.
 
-### 13.1 Pipeline
+### 14.1 Pipeline
 
 1. Extracción de mensajes de usuario desde sesiones JSONL.
 2. Vectorización con `mistral-embed` (1024 dimensiones por mensaje).
 3. Reducción dimensional 1024 → 2 mediante t-SNE (`max_iter=1000`, `init="pca"`).
 4. Clasificación por intención con reglas léxicas y visualización por color.
 
-### 13.2 Categorías de intención
+### 14.2 Categorías de intención
 
 | Categoría | Keywords representativas |
 |---|---|
@@ -464,11 +489,11 @@ uv run python tsne_analysis.py
 
 Con menos de 5 sesiones reales el script usa un conjunto de 20 conversaciones de ejemplo representativas.
 
-### 13.3 Gráfico generado
+### 14.3 Gráfico generado
 
 ![Análisis t-SNE — Intenciones de usuarios Colgate-Palmolive Colombia](tsne_conversaciones.png)
 
-### 13.4 Conclusiones de los clústeres
+### 14.4 Conclusiones de los clústeres
 
 El análisis revela tres hallazgos principales:
 
@@ -480,9 +505,9 @@ El análisis revela tres hallazgos principales:
 
 ---
 
-## 14. Detalles de Implementación
+## 15. Detalles de Implementación
 
-### 14.1 Gateway Baileys — aislamiento de sesiones
+### 15.1 Gateway Baileys — aislamiento de sesiones
 
 El gateway resuelve dos problemas que el canal nativo de OpenFang no maneja por defecto: la resolución del UUID del agente y el aislamiento de contexto por usuario.
 
@@ -512,7 +537,7 @@ Cada mensaje se despacha incluyendo el `session_id` del usuario como query param
 POST /api/agents/4fe45ca6-.../message?session_id=a1b2c3d4-...
 ```
 
-### 14.2 Formato de mensajes para WhatsApp
+### 15.2 Formato de mensajes para WhatsApp
 
 El LLM genera respuestas en Markdown estándar. WhatsApp utiliza un subconjunto propio: `*negrita*` (un asterisco), `_cursiva_` y listas con guión. La función `toWhatsApp()` realiza la conversión antes de enviar:
 
@@ -527,7 +552,7 @@ function toWhatsApp(text) {
 }
 ```
 
-### 14.3 Inyección de memoria corporativa
+### 15.3 Inyección de memoria corporativa
 
 La base de conocimiento se carga en dos capas con propósitos distintos:
 
@@ -549,7 +574,7 @@ for chunk in chunks:
 
 En cada consulta, OpenFang ejecuta búsqueda por similitud coseno y recupera los `top_k = 3` fragmentos más cercanos semánticamente, que se inyectan en el contexto del prompt antes de llamar al LLM.
 
-### 14.4 System prompt — control de comportamiento
+### 15.4 System prompt — control de comportamiento
 
 El `system_prompt` en `hand.toml` define tres bloques de instrucciones:
 
@@ -561,7 +586,7 @@ La combinación de estas reglas resolvió el bug de contaminación entre sesione
 
 ---
 
-## 15. Conclusiones
+## 16. Conclusiones
 
 **OpenFang como plataforma de producción.** El Agent OS demostró ser adecuado para un despliegue real multiusuario. Las funcionalidades de sesiones aisladas, canal WhatsApp nativo y Hands autónomos habrían requerido semanas de desarrollo adicional sobre LangChain.
 
