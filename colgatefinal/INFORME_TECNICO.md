@@ -374,39 +374,84 @@ El análisis revela tres hallazgos principales:
 
 ---
 
-## 12. Estructura del Repositorio
+## 12. Detalles de Implementación
 
-```
-colgatefinal/
-│
-├── hand.toml                  # Manifiesto del agente: modelo, memoria, Hands y canal WA
-├── main.py                    # CLI: setup / ingest / hand / status / whatsapp
-├── pyproject.toml             # Dependencias Python (uv)
-├── .env.example               # Plantilla de variables de entorno
-│
-├── scripts/
-│   ├── ingest.py              # Inyección de KB en KV Store y Vector Store
-│   └── whatsapp_bridge.py     # Helper de configuración del canal WhatsApp
-│
-├── webhook_server.py          # Webhook FastAPI alternativo (Meta Cloud API)
-├── tsne_analysis.py           # Análisis t-SNE de intenciones de usuario
-│
-├── informe.css                # Estilos del PDF (Inter + JetBrains Mono)
-├── INFORME_TECNICO.md         # Este documento
-│
-└── data/
-    ├── knowledge_base_clean.txt   # Base de conocimiento (~235 fragmentos)
-    └── datos_estructurados.json   # NIT, teléfonos, sedes, marcas
-```
+### 12.1 Gateway Baileys — aislamiento de sesiones
 
-Generación del PDF:
+El gateway resuelve dos problemas que el canal nativo de OpenFang no maneja por defecto: la resolución del UUID del agente y el aislamiento de contexto por usuario.
 
-```bash
-pandoc INFORME_TECNICO.md -o INFORME_TECNICO.html --standalone --css=informe.css
-chrome --headless --print-to-pdf=INFORME_TECNICO.pdf --no-margins INFORME_TECNICO.html
+```javascript
+// Traduce nombre del agente a UUID en cada arranque
+async function resolveAgentId(name) {
+    const res = await fetch(`${OPENFANG_URL}/api/agents`);
+    const agents = await res.json();
+    return agents.find(a => a.name === name)?.id;
+}
+
+// Crea sesión aislada por número de teléfono (se persiste en memoria)
+async function getOrCreateSession(phone) {
+    if (sessions.has(phone)) return sessions.get(phone);
+    const res = await fetch(`${OPENFANG_URL}/api/agents/${agentId}/sessions`, {
+        method: "POST"
+    });
+    const { session_id } = await res.json();
+    sessions.set(phone, session_id);
+    return session_id;
+}
 ```
 
-> El gateway de WhatsApp (`index.js`) no está en el repositorio — contiene la sesión activa de Baileys, equivalente a las credenciales de acceso de la cuenta.
+Cada mensaje se despacha incluyendo el `session_id` del usuario como query param, garantizando que OpenFang cargue únicamente el historial de esa conversación:
+
+```
+POST /api/agents/4fe45ca6-.../message?session_id=a1b2c3d4-...
+```
+
+### 12.2 Formato de mensajes para WhatsApp
+
+El LLM genera respuestas en Markdown estándar. WhatsApp utiliza un subconjunto propio: `*negrita*` (un asterisco), `_cursiva_` y listas con guión. La función `toWhatsApp()` realiza la conversión antes de enviar:
+
+```javascript
+function toWhatsApp(text) {
+    return text
+        .replace(/\*\*(.+?)\*\*/g, '*$1*')   // **bold** → *bold*
+        .replace(/^#{1,6}\s+/gm, '')           // elimina encabezados ###
+        .replace(/^---+$/gm, '')               // elimina separadores ---
+        .replace(/`{3}[\s\S]*?`{3}/g, '')      // elimina bloques de código
+        .trim();
+}
+```
+
+### 12.3 Inyección de memoria corporativa
+
+La base de conocimiento se carga en dos capas con propósitos distintos:
+
+**KV Store** — datos exactos accesibles por clave. Se inyectan con la API REST de OpenFang:
+
+```python
+for key, value in datos.items():
+    requests.post(f"{OPENFANG_URL}/api/agents/{agent_id}/memory/kv",
+                  json={"key": key, "value": value})
+```
+
+**Vector Store** — fragmentos de texto convertidos a embeddings (1024 dims). OpenFang los indexa automáticamente al recibirlos como mensajes de tipo `knowledge`:
+
+```python
+for chunk in chunks:
+    requests.post(f"{OPENFANG_URL}/api/agents/{agent_id}/message",
+                  json={"message": chunk, "type": "knowledge"})
+```
+
+En cada consulta, OpenFang ejecuta búsqueda por similitud coseno y recupera los `top_k = 3` fragmentos más cercanos semánticamente, que se inyectan en el contexto del prompt antes de llamar al LLM.
+
+### 12.4 System prompt — control de comportamiento
+
+El `system_prompt` en `hand.toml` define tres bloques de instrucciones:
+
+- **Rol y fuente de verdad**: el agente solo responde con información de su contexto corporativo; si no tiene el dato, remite al 018000520800.
+- **Restricciones multiusuario**: instrucción explícita de no usar nombres de la memoria diaria, nunca saludar con nombre propio, ignorar contexto de sesiones anteriores.
+- **Formato WhatsApp**: usar `*negrita*`, `_cursiva_`, listas con `-`, sin tablas ni bloques de código.
+
+La combinación de estas reglas resolvió el bug de contaminación entre sesiones sin necesidad de modificar el código del gateway.
 
 ---
 

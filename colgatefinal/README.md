@@ -91,7 +91,7 @@ openfang start
 python main.py setup
 ```
 
-`setup` verifica la conexión con OpenFang, valida la API key de Mistral y registra `colgate-assistant` desde `hand.toml`.
+`setup` realiza tres verificaciones en orden: confirma que el daemon OpenFang responde en el puerto 4200, valida que `MISTRAL_API_KEY` está presente en el entorno, y registra el agente `colgate-assistant` desde `hand.toml` con `openfang agent spawn`. Si el agente ya existe, lo omite sin error. Al finalizar imprime el UUID asignado — copie ese valor en `OPENFANG_AGENT_ID` del `.env`.
 
 ### 4. Cargar la base de conocimiento
 
@@ -99,7 +99,10 @@ python main.py setup
 python main.py ingest
 ```
 
-Inyecta datos estructurados (NIT, teléfonos, sedes) en el KV Store y 235 fragmentos de texto en el Vector Store.
+Ejecuta `scripts/ingest.py` en dos fases:
+
+1. **KV Store** — lee `data/datos_estructurados.json` e inyecta cada par clave-valor vía `POST /api/agents/{id}/memory/kv`. Almacena datos exactos: NIT, línea gratuita, sedes, marcas.
+2. **Vector Store** — lee `data/knowledge_base_clean.txt`, divide el contenido en fragmentos y los envía como mensajes de tipo `knowledge`. OpenFang los vectoriza con `mistral-embed` (1024 dims) y los indexa para búsqueda semántica. Total: ~235 fragmentos.
 
 ### 5. Activar Hands autónomos
 
@@ -107,7 +110,12 @@ Inyecta datos estructurados (NIT, teléfonos, sedes) en el KV Store y 235 fragme
 python main.py hand
 ```
 
-Inicia `colgate-intelligence-hand` (cada 6 horas) y `colgate-service-hand` (lunes 9 AM).
+Activa dos agentes en background mediante `openfang hand activate`:
+
+- `colgate-intelligence-hand` (tipo `collector`) — cron `0 */6 * * *`, busca en web y noticias sobre Colgate Colombia y competidores. Almacena hallazgos en memoria del agente principal.
+- `colgate-service-hand` (tipo `custom`) — cron `0 9 * * 1`, consolida opiniones de consumidores en redes. Genera reporte JSON.
+
+Si alguno ya estaba activo, el comando lo detecta y continúa sin error.
 
 ### 6. Iniciar el gateway de WhatsApp
 
@@ -119,11 +127,15 @@ node index.js
 # Escanear el código QR con WhatsApp en el primer arranque
 ```
 
+El gateway usa Baileys para conectarse al protocolo WhatsApp Web vía WebSocket. En el primer arranque genera un QR — escanearlo vincula la sesión. A partir de ese momento el proceso mantiene la conexión activa. Por cada mensaje entrante: resuelve el UUID del agente, crea o recupera la sesión del número de teléfono, consulta OpenFang y convierte la respuesta de Markdown a formato nativo de WhatsApp antes de enviarla.
+
 ### 7. Verificar el estado
 
 ```bash
 python main.py status
 ```
+
+Reporta: estado del daemon OpenFang, UUID y estado del agente `colgate-assistant`, número de pares en el KV Store, estado del canal WhatsApp y lista de Hands activos.
 
 ---
 
