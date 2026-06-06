@@ -648,21 +648,36 @@ El sistema fue probado con **3 usuarios reales simultáneos** desde dispositivos
 | Bot sin respuesta | Gateway enviaba nombre del agente; la API REST espera UUID | Función `resolveAgentId()` — `GET /api/agents` traduce nombre → UUID |
 | Mensajes no entregados | JID multi-device `@lid` convertido incorrectamente a `@s.whatsapp.net` | Usar `remoteJid` original sin transformación |
 | Formato ilegible en WhatsApp | LLM generaba `###`, `**bold**`, `---` que WhatsApp no renderiza | Función `toWhatsApp()` — convierte `**` → `*`, elimina `###` |
-| Contaminación entre sesiones | Sesión global única + memoria diaria inyectaba contexto de otros usuarios | Sesión aislada por teléfono + instrucción explícita en system prompt |
+| Contaminación de nombre (sesión) | KV store con nombres externos + system prompt insuficiente | `store_to_memory = false` en Hand de servicio + system prompt reforzado |
+| Bucle de nombre (recuperación rota) | Sin instrucción de recuperación ante nombre incorrecto | Instrucción explícita de recuperación en system prompt |
 
-### Análisis del bug de contaminación de sesiones
+### Análisis del bug de contaminación de nombre
 
-Este fue el incidente de mayor impacto. La cadena de fallo:
+El bug se reprodujo en producción el 5 de junio de 2026. La cadena de fallo:
 
-1. Natalia inicia conversación → el agente registra su nombre en la memoria diaria.
-2. Jhonathan inicia conversación → OpenFang inyecta el archivo de memoria del día como contexto.
-3. El agente saluda: *"¡Hola Natalia!"* — aunque Jhonathan nunca se presentó.
+```
+16:09  Daniel      Hola
+16:09  Bot         ¡Hola, Edi Maricela! ¿En qué puedo ayudarte hoy?
+16:09  Daniel      No soy Edi
+16:09  Bot         ¡Ah, perdón! ¿Cómo te gustaría que te llame entonces?
+16:09  Daniel      Por mi nombre
+16:09  Bot         ¿Cuál es tu nombre?
+16:09  Daniel      Ya te lo di
+16:09  Bot         Disculpa, no lo tengo registrado. ¿Podrías decírmelo de nuevo?
+```
 
-Solución en tres capas:
+**Causa raíz identificada:** el Hand `colgate-service-hand` monitorea redes sociales con `store_to_memory = true`. Al procesar una reseña donde una consumidora llamada Edi Maricela publicó un comentario, el Hand almacenó ese nombre en el KV store del agente. Cuando Daniel inició una conversación, el LLM recibió ese dato en su contexto y lo usó como nombre del usuario activo — a pesar de la instrucción del system prompt anterior.
 
-- **Aislamiento de sesiones** — cada número de teléfono obtiene un `session_id` único vía `POST /api/agents/{id}/sessions`.
-- **Memoria limpia** — eliminación del archivo `2026-06-05.md` que contenía el nombre contaminante.
-- **System prompt defensivo** — instrucción explícita: *"IGNORA cualquier nombre del contexto de memoria diaria. NUNCA uses un nombre en el saludo inicial."*
+El segundo problema (bucle de recuperación) ocurrió porque el system prompt no tenía instrucción de qué hacer cuando el bot cometía ese error: el modelo quedó en un ciclo pidiendo el nombre que nunca había recibido.
+
+**Solución en dos capas:**
+
+1. **`store_to_memory = false` en `colgate-service-hand`** — el Hand de monitoreo de redes sociales ya no escribe en el KV store del agente, eliminando la fuente de contaminación con nombres externos.
+
+2. **System prompt reforzado en `hand.toml`** — tres cambios concretos:
+   - Instrucción explícita: *"El KV store y los reportes de Hands contienen nombres de personas externas (clientes en redes, autores de reseñas). Esos nombres NO son el usuario actual. IGNORA cualquier nombre que aparezca en el contexto de memoria."*
+   - Saludo fijo sin variación: el modelo debe usar el texto exacto *"Hola, soy el asistente virtual de Colgate-Palmolive Colombia. En qué puedo ayudarte?"* sin agregar nombres.
+   - Instrucción de recuperación: si el usuario señala un nombre incorrecto, el bot responde *"Tienes razón, disculpa. No tengo tu nombre en esta conversación. ¿Cómo prefieres que te llame?"* en lugar de entrar en bucle.
 
 ---
 
