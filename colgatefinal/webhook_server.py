@@ -23,6 +23,7 @@ from fastapi.responses import PlainTextResponse
 
 
 def _load_env() -> None:
+    """Carga variables de entorno desde .env sin sobrescribir las ya definidas en el sistema."""
     env_file = Path(".env")
     if env_file.exists():
         for line in env_file.read_text(encoding="utf-8").splitlines():
@@ -59,6 +60,7 @@ app = FastAPI(title="Colgate WhatsApp Webhook")
 
 @app.get("/webhook")
 async def verify_webhook(request: Request):
+    """Maneja la verificación del webhook de Meta: valida el token y devuelve el challenge."""
     mode      = request.query_params.get("hub.mode")
     token     = request.query_params.get("hub.verify_token")
     challenge = request.query_params.get("hub.challenge")
@@ -73,6 +75,7 @@ async def verify_webhook(request: Request):
 
 @app.post("/webhook")
 async def receive_message(request: Request):
+    """Recibe mensajes de WhatsApp, consulta el agente OpenFang y envía la respuesta."""
     body = await request.json()
 
     try:
@@ -106,6 +109,7 @@ async def receive_message(request: Request):
 
 
 async def _query_agent(text: str, session_id: str) -> str:
+    """Envía un mensaje al agente OpenFang y retorna su respuesta en texto plano."""
     url     = f"{OPENFANG_URL}/api/agents/{OPENFANG_AGENT_ID}/message"
     payload = {"message": text, "session_id": session_id}
     try:
@@ -119,6 +123,7 @@ async def _query_agent(text: str, session_id: str) -> str:
 
 
 async def _send_whatsapp(to: str, text: str) -> None:
+    """Envía un mensaje de texto al número de WhatsApp indicado mediante la Meta Cloud API."""
     url = f"https://graph.facebook.com/{WA_API_VERSION}/{WA_PHONE_NUMBER_ID}/messages"
     headers = {
         "Authorization": f"Bearer {WA_ACCESS_TOKEN}",
@@ -141,6 +146,7 @@ async def _send_whatsapp(to: str, text: str) -> None:
 
 @app.get("/health")
 async def health():
+    """Endpoint de health-check: retorna estado y configuración activa del servidor."""
     return {
         "status": "ok",
         "agent_id": OPENFANG_AGENT_ID,

@@ -26,10 +26,12 @@ HANDS = ["colgate-intelligence-hand", "colgate-service-hand"]
 
 
 def _run(args: list[str], capture: bool = True) -> subprocess.CompletedProcess:
+    """Ejecuta un subproceso y devuelve el resultado con encoding UTF-8."""
     return subprocess.run(args, capture_output=capture, text=True, encoding="utf-8")
 
 
 def _clean(text: str) -> str:
+    """Elimina caracteres no-ASCII para evitar errores en consolas Windows."""
     return text.encode("ascii", errors="ignore").decode("ascii")
 
 
@@ -57,6 +59,7 @@ def _get_agent_uuid(agent_name: str) -> str:
 
 
 def _load_env() -> None:
+    """Carga variables de entorno desde .env sin sobrescribir las ya definidas en el sistema."""
     env_file = Path(".env")
     if env_file.exists():
         for line in env_file.read_text(encoding="utf-8").splitlines():
@@ -67,6 +70,7 @@ def _load_env() -> None:
 
 
 def cmd_setup(_args=None) -> int:
+    """Verifica OpenFang, la API key de Mistral y registra el agente desde hand.toml."""
     print("=" * 55)
     print("Verificacion del Entorno - Ruta B OpenFang Agent OS")
     print("=" * 55)
@@ -121,6 +125,7 @@ def cmd_setup(_args=None) -> int:
 
 
 def cmd_ingest(_args=None) -> int:
+    """Delega la ingesta de conocimiento a scripts/ingest.py."""
     print("=" * 55)
     print("Ingestion de Conocimiento Corporativo")
     print("=" * 55)
@@ -138,6 +143,7 @@ def cmd_ingest(_args=None) -> int:
 
 
 def cmd_hand(args) -> int:
+    """Activa y configura los Hands autónomos de vigilancia e inteligencia competitiva."""
     # Hand 1: Collector - inteligencia competitiva (Opcion B del taller)
     # Hand 2: Researcher - calidad de servicio al consumidor (Opcion C)
     hands_config = [
@@ -215,6 +221,7 @@ def cmd_hand(args) -> int:
 
 
 def cmd_status(_args=None) -> int:
+    """Muestra el estado del daemon, agente, memoria, canal WhatsApp y Hands activos."""
     print("=" * 55)
     print("Estado del Sistema - Colgate-Palmolive Agent OS")
     print("=" * 55)
@@ -272,6 +279,7 @@ def cmd_status(_args=None) -> int:
 
 
 def cmd_whatsapp(args) -> int:
+    """Delega la configuración del canal WhatsApp a scripts/whatsapp_bridge.py."""
     script = Path("scripts/whatsapp_bridge.py")
     subcommand = getattr(args, "subcommand", "setup") or "setup"
 
@@ -283,12 +291,14 @@ def cmd_whatsapp(args) -> int:
 
 
 def cmd_dashboard(_args=None) -> int:
+    """Abre el dashboard local de OpenFang en el navegador predeterminado."""
     print(f"Abriendo dashboard en {DASHBOARD_URL}")
     webbrowser.open(DASHBOARD_URL)
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Construye el parser de argumentos con todos los subcomandos disponibles."""
     parser = argparse.ArgumentParser(
         description="Gestor del Agente Corporativo Colgate-Palmolive (Ruta B - OpenFang)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -339,6 +349,7 @@ HANDLERS = {
 
 
 def main() -> None:
+    """Punto de entrada: parsea el subcomando y despacha al handler correspondiente."""
     parser = build_parser()
     args = parser.parse_args()
 

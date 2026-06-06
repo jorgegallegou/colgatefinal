@@ -180,9 +180,17 @@ def cluster_report(sessions: list[dict], labels: list[str]):
     print()
 
     print("ANÁLISIS DE CLÚSTERES:")
-    if counts.get("Productos y marcas", 0) > counts.get("Otros", 0):
-        print("  • El clúster dominante es 'Productos y marcas': los consumidores")
-        print("    buscan principalmente información sobre el portafolio.")
+    dominante = counts.most_common(1)[0][0]
+    print(f"  • El clúster dominante es '{dominante}': ", end="")
+    if dominante == "Productos y marcas":
+        print("los consumidores buscan principalmente información sobre el portafolio.")
+    elif dominante == "Saludo / General":
+        print("la mayoría de interacciones son saludos iniciales — el agente\n"
+              "    responde correctamente redirigiendo hacia consultas corporativas.")
+    elif dominante == "Atención al cliente":
+        print("usuarios escalan al canal humano con frecuencia.")
+    else:
+        print("revisar manualmente las sesiones para interpretar el patrón.")
     if counts.get("Puntos de venta", 0) > 0:
         print("  • Clúster 'Puntos de venta' visible: necesidad de un localizador")
         print("    de tiendas integrado en el agente.")
@@ -241,6 +249,7 @@ def main():
 
     print("Ejecutando t-SNE...")
     plot_tsne(embeddings, labels, OUTPUT_PLOT)
+    os.startfile(OUTPUT_PLOT)
 
 
 if __name__ == "__main__":

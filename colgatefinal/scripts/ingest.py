@@ -1,3 +1,16 @@
+"""
+Ingesta de conocimiento corporativo de Colgate-Palmolive en OpenFang.
+
+Módulo 2 — Pipeline de datos:
+  - KV Store: datos estructurados (NIT, contactos, FAQs) desde datos_estructurados.json
+  - Vector Store: base de conocimiento textual desde knowledge_base_clean.txt,
+    vectorizada automáticamente por OpenFang con nomic-embed-text (1024 dims).
+
+Uso:
+    python scripts/ingest.py
+    python main.py ingest
+"""
+
 import json
 import subprocess
 import sys
@@ -15,6 +28,7 @@ CHUNKS_PER_MESSAGE = 5
 
 
 def _run(args: list[str]) -> subprocess.CompletedProcess:
+    """Ejecuta un comando de CLI y captura stdout/stderr en UTF-8."""
     return subprocess.run(args, capture_output=True, text=True, encoding="utf-8")
 
 
@@ -38,6 +52,7 @@ def ensure_daemon() -> bool:
 
 
 def ingest_kv_store() -> None:
+    """Inyecta datos estructurados (contactos, FAQs, sedes) en el KV Store del agente."""
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
 
     pares: dict[str, str] = {

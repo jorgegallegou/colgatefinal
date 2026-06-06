@@ -201,11 +201,18 @@ colgatefinal/
 Visualiza los tipos de consulta de los usuarios agrupados por intención usando Mistral Embeddings y t-SNE.
 
 ```bash
-uv run python tsne_analysis.py
+uv run --env-file .env python tsne_analysis.py
 # Salida: tsne_conversaciones.png
 ```
 
-Con menos de 5 sesiones reales el script usa un conjunto de 20 conversaciones de ejemplo representativas.
+**Pipeline:**
+1. Extrae mensajes de usuario desde sesiones JSONL de OpenFang
+2. Envía el texto a `mistral-embed` (modelo de embeddings de Mistral, distinto al LLM de chat) — genera un vector de 1024 dimensiones por sesión
+3. t-SNE comprime los vectores de 1024 → 2 dimensiones para visualización
+4. Puntos cercanos en el gráfico = conversaciones semánticamente similares
+5. La clasificación por intención se hace por reglas léxicas — t-SNE posiciona, no etiqueta
+
+El análisis se ejecutó sobre 7 sesiones reales extraídas de los archivos JSONL del Agent OS, generando embeddings con mistral-embed y aplicando t-SNE sobre una matriz de 7 × 1024 dimensiones.
 
 ---
 

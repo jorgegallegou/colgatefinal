@@ -21,6 +21,7 @@ TOKEN_KEY = "WA_ACCESS_TOKEN"
 
 
 def _load_env() -> None:
+    """Carga variables de entorno desde .env sin sobrescribir las ya definidas en el sistema."""
     env_file = Path(".env")
     if env_file.exists():
         for line in env_file.read_text(encoding="utf-8").splitlines():
@@ -31,6 +32,7 @@ def _load_env() -> None:
 
 
 def _run(args: list[str], stdin_text: str | None = None) -> subprocess.CompletedProcess:
+    """Ejecuta un subproceso con entrada opcional por stdin y captura la salida en UTF-8."""
     return subprocess.run(
         args,
         input=stdin_text,
@@ -41,6 +43,7 @@ def _run(args: list[str], stdin_text: str | None = None) -> subprocess.Completed
 
 
 def cmd_setup() -> int:
+    """Guarda el token de WhatsApp en el vault de OpenFang y habilita el canal."""
     _load_env()
 
     token = os.environ.get(TOKEN_KEY, "").strip()
@@ -96,6 +99,7 @@ def cmd_setup() -> int:
 
 
 def cmd_status() -> int:
+    """Muestra el estado actual de todos los canales registrados en OpenFang."""
     result = _run(["openfang", "channel", "list"])
     print("Estado de canales OpenFang:")
     print("-" * 50)
@@ -104,6 +108,7 @@ def cmd_status() -> int:
 
 
 def cmd_test() -> int:
+    """Envía un mensaje de prueba por el canal WhatsApp para validar la configuración."""
     print(f"Enviando mensaje de prueba por {CHANNEL}...")
     result = _run(["openfang", "channel", "test", CHANNEL])
     output = result.stdout.strip() or result.stderr.strip()
@@ -112,6 +117,7 @@ def cmd_test() -> int:
 
 
 def cmd_stop() -> int:
+    """Deshabilita el canal WhatsApp en OpenFang."""
     print(f"Deshabilitando canal {CHANNEL}...")
     result = _run(["openfang", "channel", "disable", CHANNEL])
     if result.returncode == 0:
