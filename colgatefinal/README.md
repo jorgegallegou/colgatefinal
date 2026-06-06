@@ -794,6 +794,33 @@ La coincidencia entre clústeres geométricos de t-SNE y categorías léxicas va
 
 ---
 
+## Arranque del sistema
+
+### Requisitos previos
+- OpenFang instalado y configurado
+- Node.js 18+
+- Variables de entorno en `.env`
+
+### Terminal 1 — Sistema
+```powershell
+openfang start && python main.py hand && python main.py status
+```
+
+### Terminal 2 — Gateway WhatsApp (logs en tiempo real)
+```powershell
+node $env:USERPROFILE\.openfang\whatsapp-gateway\index.js
+```
+
+### Comandos adicionales
+```powershell
+# Dashboard web
+python main.py dashboard
+
+# Análisis t-SNE de intenciones
+uv run --env-file .env python tsne_analysis.py
+```
+
+
 ## Licencia
 
 Proyecto académico — Universidad Autónoma de Occidente, 2026.
