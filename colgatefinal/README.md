@@ -706,9 +706,9 @@ Se eligió t-SNE porque el objetivo es **identificar grupos de intención**, no 
 
 ### Cómo funciona t-SNE
 
-1. Para cada par de puntos calcula la probabilidad $p_{ij}$ de que sean vecinos en 1024D (distribución gaussiana centrada en cada punto).
-2. Inicializa posiciones en 2D y calcula $q_{ij}$ usando una distribución **t de Student** con 1 grado de libertad — sus colas más pesadas evitan el *crowding problem* (que todos los puntos colapsen al centro).
-3. Minimiza iterativamente la **divergencia KL** entre $p_{ij}$ y $q_{ij}$, ajustando las posiciones 2D hasta que el vecindario 2D refleje el vecindario de 1024D.
+1. Calcula la similitud entre cada par de conversaciones en 1024D usando una distribución gaussiana: conversaciones cercanas tienen alta probabilidad de ser vecinas.
+2. Inicializa posiciones aleatorias en 2D y mide similitudes con una distribución **t de Student** con 1 grado de libertad — sus colas más pesadas evitan el *crowding problem* (que todos los puntos colapsen al centro).
+3. Ajusta iterativamente las posiciones 2D minimizando la **divergencia KL** entre ambas distribuciones, hasta que el vecindario en 2D refleje fielmente el vecindario en 1024D.
 
 ### Hiperparámetros aplicados
 
