@@ -668,14 +668,7 @@ Solución en tres capas:
 
 ## Análisis t-SNE de Intenciones
 
-Se implementó un análisis de clustering sobre las conversaciones del agente para identificar los patrones de consulta de los usuarios.
-
-### Pipeline
-
-1. Extracción de mensajes de usuario desde sesiones JSONL.
-2. Vectorización con `mistral-embed` (1024 dimensiones por mensaje).
-3. Reducción dimensional 1024 → 2 mediante t-SNE (`max_iter=1000`, `init="pca"`).
-4. Clasificación por intención con reglas léxicas y visualización por color.
+Se implementó un análisis de clustering sobre las conversaciones del agente para identificar los patrones de consulta de los usuarios. El código completo está en [`tsne_analysis.py`](tsne_analysis.py).
 
 ```bash
 uv run --env-file .env python tsne_analysis.py
@@ -684,29 +677,80 @@ uv run --env-file .env python tsne_analysis.py
 
 Con menos de 5 sesiones reales el script usa un conjunto de 20 conversaciones de ejemplo representativas.
 
-### Categorías de intención
+### ¿Por qué t-SNE?
 
-| Categoría | Keywords representativas |
-|---|---|
-| Productos y marcas | pasta, jabón, crema, colgate, palmolive, hill |
-| Puntos de venta | dónde, comprar, supermercado, éxito, carulla, precio |
-| Atención al cliente | teléfono, contacto, horario, línea, correo |
-| Historia / Empresa | historia, fundación, 1806, colombia, origen |
-| Sostenibilidad | ambiental, reciclaje, carbono, empaques, ecológico |
-| Empleo / RRHH | trabajo, vacante, hoja de vida, postular |
-| Saludo / General | hola, buenos días, gracias, ok |
+Las conversaciones se vectorizan con `mistral-embed`, produciendo vectores de **1024 dimensiones**. t-SNE (t-Distributed Stochastic Neighbor Embedding) es una técnica de **reducción de dimensionalidad no lineal** que comprime ese espacio a 2D preservando la estructura local: conversaciones semánticamente similares quedan cercanas en el gráfico.
+
+| Técnica | Tipo | Preserva | Idoneidad para este caso |
+|---|---|---|---|
+| PCA | Lineal | Varianza global | Rápido pero pierde estructura no lineal |
+| UMAP | No lineal | Estructura local + global | Alternativa válida, mejor topología global |
+| **t-SNE** | **No lineal** | **Estructura local (vecindades)** | **Óptimo para visualizar clústeres compactos** |
+
+Se eligió t-SNE porque el objetivo es **identificar grupos de intención**, no reconstruir el espacio global de embeddings.
+
+### Cómo funciona t-SNE
+
+1. Para cada par de puntos calcula la probabilidad $p_{ij}$ de que sean vecinos en 1024D (distribución gaussiana centrada en cada punto).
+2. Inicializa posiciones en 2D y calcula $q_{ij}$ usando una distribución **t de Student** con 1 grado de libertad — sus colas más pesadas evitan el *crowding problem* (que todos los puntos colapsen al centro).
+3. Minimiza iterativamente la **divergencia KL** entre $p_{ij}$ y $q_{ij}$, ajustando las posiciones 2D hasta que el vecindario 2D refleje el vecindario de 1024D.
+
+### Hiperparámetros aplicados
+
+| Parámetro | Valor | Justificación |
+|---|---|---|
+| `perplexity` | `min(30, max(5, n//3))` | Escala con el número de muestras; 30 es el valor de referencia estándar |
+| `max_iter` | 1 000 | Convergencia robusta sin costo computacional excesivo |
+| `init` | `'pca'` | Inicialización con PCA en lugar de aleatoria: más estable y reproducible |
+| `learning_rate` | `'auto'` | scikit-learn calcula `max(200, n/12)` automáticamente |
+| `random_state` | 42 | Reproducibilidad del experimento |
+
+Los embeddings se estandarizan con `StandardScaler` antes de t-SNE para evitar que dimensiones con mayor varianza dominen el cálculo de distancias.
 
 ### Gráfico generado
 
 ![Análisis t-SNE — Intenciones de usuarios Colgate-Palmolive Colombia](tsne_conversaciones.png)
 
-### Conclusiones de los clústeres
+### Categorías de intención
 
-**Clúster dominante: Productos y marcas.** La mayoría de las consultas giran en torno al portafolio de productos. Los consumidores preguntan sobre características, composición y diferencias entre referencias de pasta dental, jabones y cremas. Esto confirma que la base de conocimiento debe mantenerse actualizada ante cada lanzamiento de producto.
+La clasificación por intención es **independiente** de t-SNE: se hace con reglas léxicas antes de la reducción dimensional. t-SNE solo posiciona — no etiqueta. Si los clústeres geométricos coinciden con las categorías léxicas, confirma que los embeddings capturan genuinamente el significado semántico.
 
-**Clúster secundario: Puntos de venta.** El segundo grupo más denso concentra preguntas sobre dónde comprar y a qué precio. Indica una oportunidad de integrar un localizador de tiendas en tiempo real como herramienta del agente.
+| Categoría | Keywords representativas |
+|---|---|
+| Productos y marcas | pasta, jabón, crema, colgate, palmolive, hill, suavitel, ajax |
+| Puntos de venta | dónde, comprar, supermercado, éxito, carulla, precio |
+| Atención al cliente | teléfono, contacto, horario, línea, correo, 018000 |
+| Historia / Empresa | historia, fundación, 1806, colombia, nit, yumbo |
+| Sostenibilidad | ambiental, reciclaje, carbono, empaques, 2040 |
+| Empleo / RRHH | trabajo, vacante, hoja de vida, postular, convocatoria |
+| Saludo / General | hola, buenos días, gracias, ok |
 
-**Clúster de escalamiento: Atención al cliente.** Un segmento visible de usuarios busca contacto humano — teléfonos, correos, horarios. El agente maneja correctamente estos casos derivando a la línea 018000520800, pero el volumen sugiere que una proporción de consultas supera la capacidad de respuesta automatizada.
+### Análisis de los clústeres
+
+**Clúster 1 — Productos y marcas *(dominante)*.**
+El grupo más denso del gráfico. Concentra preguntas sobre características de productos específicos: composición de pastas dentales, diferencias entre referencias (Colgate Total vs Triple Acción), presentaciones de jabones Palmolive y alimento Hill's. Los embeddings de preguntas de producto comparten una semántica de *comparación y descripción* que los diferencia claramente de consultas de servicio o corporativas. **Implicación:** la base de conocimiento debe actualizarse ante cada lanzamiento; el Hand autónomo ya detectó Optic White Pro Series (marzo 2026) de forma proactiva.
+
+**Clúster 2 — Puntos de venta.**
+Próximo al de Productos porque la pregunta típica es *"¿Dónde consigo X?"*. Alta densidad que revela una necesidad parcialmente cubierta: el agente responde con cadenas de supermercado pero no puede informar stock en tiendas específicas. **Implicación:** oportunidad de integrar un localizador de tiendas en tiempo real como herramienta del agente.
+
+**Clúster 3 — Atención al cliente.**
+Semánticamente **distante** del clúster de productos, lo que confirma que t-SNE distingue correctamente *información de producto* e *información de servicio*. Usuarios que escalan a canal humano: teléfono, correo, horarios. **Implicación:** el volumen del clúster indica que una proporción de consultas supera la capacidad del bot; el agente redirige correctamente a 018000520800.
+
+**Clúster 4 — Historia / Empresa.**
+El **más compacto** del gráfico: conversaciones sobre fundación 1806, llegada a Colombia 1943, planta Yumbo y NIT 890.300.546-6. La homogeneidad semántica es alta porque el usuario busca datos factuales precisos. **Implicación:** cubierto por el KV Store (datos exactos deterministas); no requiere RAG.
+
+**Clúster 5 — Sostenibilidad.**
+Próximo a Historia/Empresa porque ambos tratan información corporativa estratégica, pero con vocabulario ambiental diferenciado. Clúster de crecimiento: los compromisos 2030/2040 son temas emergentes. **Implicación:** enriquecer periódicamente con actualizaciones del Hand de inteligencia competitiva.
+
+**Clúster 6 — Empleo / RRHH.**
+El **más aislado** del gráfico. Las solicitudes laborales tienen semántica completamente diferente al dominio de consumidor. **Implicación:** candidato para un flujo conversacional especializado (por ejemplo, recolectar datos del candidato y redirigir al portal de talento de Colgate).
+
+**Clúster 7 — Saludo / General.**
+Disperso en el gráfico porque los mensajes de apertura (*"Hola"*, *"Gracias"*) no tienen dirección semántica definida. **Implicación:** comportamiento esperado. El agente responde con un saludo y redirige a una consulta concreta; no requiere acción adicional.
+
+### Validación de la coherencia semántica
+
+La coincidencia entre clústeres geométricos de t-SNE y categorías léxicas valida que `mistral-embed` codifica el tipo de consulta en el espacio vectorial. Si el modelo distingue intenciones geométricamente, también recuperará fragmentos relevantes en las búsquedas RAG — confirmando que los embeddings son una base sólida para el sistema de recuperación semántica del agente.
 
 ---
 
