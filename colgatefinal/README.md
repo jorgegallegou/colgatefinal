@@ -120,7 +120,7 @@ Usuario de WhatsApp
 └─────────────────────────────────────────┘
 ```
 
-**Nota sobre el webhook alternativo.** El repositorio incluye `webhook_server.py` (FastAPI + uvicorn), un servidor webhook compatible con la Meta WhatsApp Cloud API. Es el mecanismo estándar para entornos donde OpenFang no gestiona el canal nativo. En producción se usó el Gateway Baileys porque permite vinculación directa con el número de WhatsApp sin configuración de webhook en Meta Developer Console.
+**Nota sobre el webhook alternativo.** El repositorio incluye `webhook_server.py` (FastAPI + uvicorn), un servidor webhook compatible con la Meta WhatsApp Cloud API oficial. Se usa cuando se prefiere la API de Meta sobre el canal nativo de OpenFang — por ejemplo, en despliegues cloud con dominio público y HTTPS donde Meta entrega los mensajes a una URL registrada en Developer Console. En producción se usó el Gateway Baileys porque se conecta directamente al protocolo WhatsApp Web mediante un QR, sin requerir número verificado en Meta ni configuración de webhook.
 
 ### Ciclo de vida de un mensaje
 
